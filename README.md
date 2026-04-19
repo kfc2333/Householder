@@ -1,4 +1,4 @@
-# LeastSquares
+# QR
 
 ## GitHub configuration
 
