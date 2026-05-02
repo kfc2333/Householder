@@ -3,6 +3,7 @@ import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
 open scoped BigOperators
+set_option linter.style.longLine false
 
 namespace QR
 noncomputable section
@@ -41,7 +42,6 @@ lemma theta_n_leq_gamma_n_rho_posneg
       have hle_mul : (n : ℝ) * (u : ℝ) ≤ (n.succ : ℝ) * (u : ℝ) := by
         exact mul_le_mul_of_nonneg_right hle_nat (by exact_mod_cast u.2)
       exact lt_of_le_of_lt hle_mul hnu
-
     have hnu_neq1 : (n : ℝ) * (u : ℝ) ≠ 1 := by
       exact ne_of_lt hnu_ih
     have hnu_neq : 1 - (u : ℝ) * (n : ℝ) ≠ 0 := by
@@ -52,7 +52,6 @@ lemma theta_n_leq_gamma_n_rho_posneg
       simpa [one_mul] using mul_le_mul_of_nonneg_right this uge0
     have ul1 : (u : ℝ) < 1 :=
       lt_of_le_of_lt hu_le hnu
-
     obtain ⟨θn, hθn, hθn_bound⟩ := ih δ_ih ρ_ih hδ_ih hρ_ih hnu_ih
     cases (hρ 0) with
     | inl h=>
@@ -127,21 +126,19 @@ lemma theta_n_leq_gamma_n_rho_posneg
           |(θn - δ 0)| / (1 - (u : ℝ)) ≤ (|θn| + |(δ 0 : ℝ)|) / (1 - (u : ℝ)) := by
             field_simp [ul1]
             have := (abs_add_le θn (-(δ 0)))
-            simp at this
+            simp only [abs_neg] at this
             exact this
           (|θn| + |(δ 0 : ℝ)|) / (1 - (u : ℝ)) ≤ (|θn| + u) / (1 - (u : ℝ)) := by
             field_simp [ul1]
             simp [(hδ 0)]
           (|θn| + u) / (1 - (u : ℝ)) ≤ (gamma u n + u) / (1 - (u : ℝ)) := by
             field_simp [ul1]
-            simp [gamma]
+            simp only [gamma, add_le_add_iff_right]
             exact hθn_bound
           (gamma u n + u) / (1 - (u : ℝ)) = (((n : ℝ) + 1) * (u : ℝ) - (n : ℝ) * (u : ℝ) * (u : ℝ)) / ((1 - (u : ℝ)) * (1 - (n : ℝ) * (u : ℝ))) := by
-            simp [gamma]
-            have : (1 - (u : ℝ)) ≠ 0 := by
-              linarith
-            have : (1 - (n : ℝ) * (u : ℝ)) ≠ 0 := by
-              linarith
+            simp only [gamma]
+            have : (1 - (u : ℝ)) ≠ 0 := by linarith
+            have : (1 - (n : ℝ) * (u : ℝ)) ≠ 0 := by linarith
             field_simp [ul1]
             ring
           (((n : ℝ) + 1) * (u : ℝ) - (n : ℝ) * (u : ℝ) * (u : ℝ)) / ((1 - (u : ℝ)) * (1 - (n : ℝ) * (u : ℝ))) ≤ ((n : ℝ) + 1) * (u : ℝ) / ((1 - (u : ℝ)) * (1 - (n : ℝ) * (u : ℝ))) := by
@@ -151,7 +148,7 @@ lemma theta_n_leq_gamma_n_rho_posneg
               linarith
             field_simp [ul1, this]
             ring_nf
-            simp
+            simp only [tsub_le_iff_right, le_add_iff_nonneg_right]
             exact uunge0
           ((n : ℝ) + 1) * (u : ℝ) / ((1 - (u : ℝ)) * (1 - (n : ℝ) * (u : ℝ))) ≤ gamma u n.succ := by
             simp only [gamma, Nat.cast_succ]
