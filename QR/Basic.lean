@@ -97,19 +97,32 @@ lemma gamma_bound_iff_gamma_bound' (n : ℕ) (η : ℝ) :
     rw [hη, gamma_bound]
     ring_nf
     exact hθ
+lemma diff_gamma_bound_iff_gamma_bound (n : ℕ) (hnu : (n : ℝ) * (u : ℝ) < 1) (x x' : ℝ) (hx : x ≠ 0) :
+  diff_gamma_bound u n x x' ↔ gamma_bound u n (x' / x) := by
+  rw [← diff_gamma_bound_theta_iff_diff_gamma_bound u n hnu x x', gamma_bound_iff_gamma_bound', gamma_bound', diff_gamma_bound_theta, diff_gamma_bound_theta]
+  constructor
+  · rintro ⟨θ, h₁, h₂⟩
+    refine ⟨θ, ?_, h₂⟩
+    field_simp [h₁, hx]
+    exact h₁
+  · rintro ⟨θ, h₁, h₂⟩
+    refine ⟨θ, ?_, h₂⟩
+    field_simp [hx] at h₁
+    exact h₁
 
 lemma gamma_bound_monotune (n₁ n₂ : ℕ) (η : ℝ) (hnu₁ : (n₁ : ℝ) * (u : ℝ) < 1) (hnu₂ : (n₂ : ℝ) * (u : ℝ) < 1) (hle : n₁ ≤ n₂) (hη : gamma_bound u n₁ η) :
   gamma_bound u n₂ η := by
   rw [gamma_bound] at hη ⊢
   exact le_trans hη (gamma_monotune u n₁ n₂ hnu₁ hnu₂ hle)
 
-lemma gamma_bound_mul (n₁ n₂ : ℕ) (η₁ η₂ : ℝ) (hnu : ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) < 1) (hη₁ : gamma_bound u n₁ η₁) (hη₂ : gamma_bound u n₂ η₂) :
-  gamma_bound u (n₁ + n₂) (η₁ * η₂) := by
-  rw [gamma_bound] at hη₁ hη₂ ⊢
+lemma diff_gamma_bound_mul (n₁ n₂ : ℕ) (x x' x'' : ℝ) (hnu : ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) < 1) (hbound₁ : diff_gamma_bound u n₁ x x') (hbound₂ : diff_gamma_bound u n₂ x' x'') :
+  diff_gamma_bound u (n₁ + n₂) x x'' := by
   have hnu₁ : (n₁ : ℝ) * (u : ℝ) < 1 := by
     sorry
+  have hnu₂ : (n₂ : ℝ) * (u : ℝ) < 1 := by
+    sorry
   have hnu₁_neq : (1 - (n₁ : ℝ) * (u : ℝ)) ≠ 0 := by linarith
-  have hnu₂_neq : (1 - (n₂ : ℝ) * (u : ℝ)) ≠ 0 := by sorry
+  have hnu₂_neq : (1 - (n₂ : ℝ) * (u : ℝ)) ≠ 0 := by linarith
   have hnu_neq : (1 - ((n₁ + n₂) : ℝ) * (u : ℝ)) ≠ 0 := by linarith
   have h : (γ u n₁ + 1) * (γ u n₂ + 1) ≤ γ u (n₁ + n₂) + 1 := by
     calc
@@ -131,19 +144,22 @@ lemma gamma_bound_mul (n₁ n₂ : ℕ) (η₁ η₂ : ℝ) (hnu : ((n₁ : ℝ)
     _ = γ u (n₁ + n₂) + 1 := by
       rw [γ]
       sorry
-  calc
-    |η₁ * η₂ - 1| = |(η₁ - 1) * (η₂ - 1) + (η₁ - 1) + (η₂ - 1)| := by
-      ring_nf
-    _ ≤ |(η₁ - 1) * (η₂ - 1) + (η₁ - 1)| + |(η₂ - 1)| := abs_add_le _ _
-    _ ≤ |(η₁ - 1) * (η₂ - 1)| + |(η₁ - 1)| + |(η₂ - 1)| := by
-      rw [add_le_add_iff_right]
-      exact abs_add_le _ _
-    _ ≤ γ u n₁ * γ u n₂ + γ u n₁ + γ u n₂ := by
-      rw [abs_mul]
-      gcongr
-      exact gamma_nonneg u n₁ hnu₁
-    _ ≤ γ u (n₁ + n₂) := by
-      linarith [h]
+
+  rw [← diff_gamma_bound_theta_iff_diff_gamma_bound] at hbound₁ hbound₂ ⊢
+  · rcases hbound₁ with ⟨θ₁, hxx', hθ₁⟩
+    rcases hbound₂ with ⟨θ₂, hx'x'', hθ₂⟩
+    exists (θ₁ + θ₂ + θ₁ * θ₂)
+    rw [hx'x'', hxx']
+    ring_nf
+    simp only [true_and]
+    sorry
+  · simpa [Nat.cast_add] using hnu
+  · exact hnu₂
+  · exact hnu₁
+
+lemma gamma_bound_mul (n₁ n₂ : ℕ) (η₁ η₂ : ℝ) (hnu : ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) < 1) (hη₁ : gamma_bound u n₁ η₁) (hη₂ : gamma_bound u n₂ η₂) :
+  gamma_bound u (n₁ + n₂) (η₁ * η₂) := by
+  sorry
 
 
 def fl (x x' : ℝ) : Prop :=
@@ -167,7 +183,13 @@ lemma fl_gammma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
     exact le_trans hδ hle
   rw [mul_comm]
   exact mul_le_mul_of_nonneg_right this (abs_nonneg x)
--- lemma fl_bound (n : ℝ) (x x' x'' : ℝ) (hnu : (n : ℝ + 1) * (u : ℝ) < 1) (hbound : diff_gamma_bound u n x x') (hfl : fl x' x'') ()
+lemma fl_bound (n : ℕ) (x x' x'' : ℝ) (hnu : ((n : ℝ) + 1) * (u : ℝ) < 1) (hbound : diff_gamma_bound u n x x') (hfl : fl u x' x'') :
+  diff_gamma_bound u (n + 1) x x'' := by
+  have hbound' : diff_gamma_bound u 1 x' x'' := by
+    apply fl_gammma_bound u x' x''
+    · sorry
+    · exact hfl
+  sorry
 
 def fl_add (x y z : ℝ) : Prop :=
   fl u (x + y) z
@@ -181,44 +203,69 @@ def fl_add_bound
   (hboundx : diff_gamma_bound u nx x x')
   (hboundy : diff_gamma_bound u ny y y') :
   diff_gamma_bound u ((nx ⊔ ny) + 1) (x + y) z := by sorry
+def fl_mul_bound
+  (nx ny : ℕ)
+  (x y x' y' z : ℝ)
+  (hfl_mul : fl_mul u x' y' z)
+  (hboundx : diff_gamma_bound u nx x x')
+  (hboundy : diff_gamma_bound u ny y y') :
+  diff_gamma_bound u ((nx + ny) + 1) (x * y) z := by sorry
 
-def fl_vec_dot : {n : ℕ} → Vec n → Vec n → ℝ → Prop
+def fl_vec_dot : (n : ℕ) → Vec n → Vec n → ℝ → Prop
   | 0, _, _, z => z = 0
   | n + 1, x, y, z =>
     ∃ p s : ℝ,
-      fl_mul u (x (Fin.last n)) (y (Fin.last n)) p ∧
-      fl_vec_dot (n := n) (fun i => x (Fin.castSucc i)) (fun i => y (Fin.castSucc i)) s ∧
+      fl_mul u (x 0) (y 0) p ∧
+      fl_vec_dot n (fun i => x (Fin.succ i)) (fun i => y (Fin.succ i)) s ∧
       fl_add u p s z
 
-lemma fl_vec_dot_bound_delta
-  (n : ℕ)
-  (x y : Vec n)
-  (z : ℝ)
-  (hfl : fl_vec_dot u x y z) :
-  ∃ θ : Fin n → ℝ,
-    z = ∑ i, x i * y i * (1 + θ i) ∧
-    (∀ i, |θ i| ≤ γ u (if (i : ℕ) = 0 then n else (n - i + 1))) :=
-  by induction n generalizing z with
-  | zero =>
-    exists fun _ => 0
-    simp only [fl_vec_dot] at hfl
-    simp only [Finset.univ_eq_empty, add_zero, mul_one, Finset.sum_empty, abs_zero, γ, Nat.cast_ite,
-    CharP.cast_eq_zero, ite_mul, zero_mul, IsEmpty.forall_iff, and_true]
-    exact hfl
-  | succ n ih =>
-    -- p: product, i.e. x0 * y0.
-    -- s: sum of the rest, i.e. ∑ i, x i.succ * y i.succ * (1 + θ_ih i)
-    obtain ⟨p, s, hp, hfl_vec_dot, hfl_add⟩ := hfl
-    obtain ⟨θ_ih, hθ_ih⟩ := ih (fun i => x (Fin.castSucc i)) (fun i => y (Fin.castSucc i)) s hfl_vec_dot
-    sorry
+-- lemma fl_vec_dot_bound_delta
+--   (n : ℕ)
+--   (x y : Vec n)
+--   (z : ℝ)
+--   (hfl : fl_vec_dot u n x y z) :
+--   ∃ θ : Fin n → ℝ,
+--     z = ∑ i, x i * y i * (1 + θ i) ∧
+--     (∀ i, |θ i| ≤ γ u (if (i : ℕ) = 0 then n else (n - i + 1))) :=
+--   by induction n generalizing z with
+--   | zero =>
+--     exists fun _ => 0
+--     simp only [fl_vec_dot] at hfl
+--     simp only [Finset.univ_eq_empty, add_zero, mul_one, Finset.sum_empty, abs_zero, γ, Nat.cast_ite,
+--     CharP.cast_eq_zero, ite_mul, zero_mul, IsEmpty.forall_iff, and_true]
+--     exact hfl
+--   | succ n ih =>
+--     -- p: product, i.e. x0 * y0.
+--     -- s: sum of the rest, i.e. ∑ i, x i.succ * y i.succ * (1 + θ_ih i)
+--     obtain ⟨p, s, hp, hfl_vec_dot, hfl_add⟩ := hfl
+--     obtain ⟨θ_ih, hθ_ih⟩ := ih (fun i => x (Fin.castSucc i)) (fun i => y (Fin.castSucc i)) s hfl_vec_dot
+--     sorry
 
 theorem fl_vec_dot_bound
   (n : ℕ)
+  (hnu : ((n : ℝ) + 1) * (u : ℝ) < 1)
   (x y : Vec n)
   (z : ℝ)
-  (hfl : fl_vec_dot u x y z) :
-  |(z - (x ⬝ᵥ y))| ≤ γ u n * (x ⬝ᵥ y) := by
-    sorry
+  (hfl : fl_vec_dot u n x y z) :
+  diff_gamma_bound u (n + 1) (x ⬝ᵥ y) z := by
+  induction n generalizing z with
+  | zero =>
+    simp only [fl_vec_dot] at hfl
+    simp only [diff_gamma_bound, Matrix.dotProduct_of_isEmpty, hfl, sub_self, abs_zero, zero_add, mul_zero, Std.le_refl]
+  | succ n ih =>
+    have hnu_n : ((n : ℝ) + 1) * (u : ℝ) < 1 := by
+      sorry
+    -- p: product, i.e. x0 * y0.
+    -- s: sum of the rest
+    obtain ⟨p, s, hp, hfl_vec_dot, hfl_add⟩ := hfl
+    have s_bound : diff_gamma_bound u (n + 1) (∑ i, x (Fin.succ i) * y (Fin.succ i)) s := ih hnu_n (fun i => x (Fin.succ i)) (fun i => y (Fin.succ i)) s hfl_vec_dot
+    have p_bound : diff_gamma_bound u 1 (x 0 * y 0) p := by
+      apply fl_gammma_bound u (x 0 * y 0) p
+      · sorry
+      · exact hp
+    have add_bound := fl_add_bound u 1 (n + 1) (x 0 * y 0) (∑ i, x (Fin.succ i) * y (Fin.succ i)) p s z hfl_add p_bound s_bound
+    simp at add_bound
+    simpa [dotProduct, Fin.sum_univ_succ, add_comm] using add_bound
 
 end
 end QR
