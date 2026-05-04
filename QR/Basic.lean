@@ -115,7 +115,7 @@ lemma gamma_bound_monotune (n₁ n₂ : ℕ) (η : ℝ) (hnu₁ : (n₁ : ℝ) *
   rw [gamma_bound] at hη ⊢
   exact le_trans hη (gamma_monotune u n₁ n₂ hnu₁ hnu₂ hle)
 
-lemma diff_gamma_bound_mul (n₁ n₂ : ℕ) (x x' x'' : ℝ) (hnu : ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) < 1) (hbound₁ : diff_gamma_bound u n₁ x x') (hbound₂ : diff_gamma_bound u n₂ x' x'') :
+theorem diff_gamma_bound_mul (n₁ n₂ : ℕ) (x x' x'' : ℝ) (hnu : ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) < 1) (hbound₁ : diff_gamma_bound u n₁ x x') (hbound₂ : diff_gamma_bound u n₂ x' x'') :
   diff_gamma_bound u (n₁ + n₂) x x'' := by
   have hnu₁ : (n₁ : ℝ) * (u : ℝ) < 1 := by
     sorry
@@ -264,8 +264,31 @@ theorem fl_vec_dot_bound
       · sorry
       · exact hp
     have add_bound := fl_add_bound u 1 (n + 1) (x 0 * y 0) (∑ i, x (Fin.succ i) * y (Fin.succ i)) p s z hfl_add p_bound s_bound
-    simp at add_bound
+    simp only [le_add_iff_nonneg_left, zero_le, sup_of_le_right] at add_bound
     simpa [dotProduct, Fin.sum_univ_succ, add_comm] using add_bound
+
+def householder (n : ℕ) (x : Vec n) : Vec n :=
+  if h : n = 0 then
+    x
+  else
+    -- (1) s = fl(sqrt(fl(xᵀx)))
+    let s : ℝ := ‖x‖
+    let σ : ℝ := if x ⟨0, Nat.pos_of_ne_zero h⟩ < 0 then -1 else 1
+    -- (2) v₀ = fl(x₀ + s)
+    let v₀ : ℝ := x ⟨0, Nat.pos_of_ne_zero h⟩ + σ * s
+    let v' : Vec n :=
+      fun i => if i = ⟨0, Nat.pos_of_ne_zero h⟩ then v₀ else x i
+    -- (3) p = fl(s * v₀)
+    let p : ℝ := s * v₀
+    -- (4) β = fl(1 / p)
+    let β : ℝ := 1 / p
+    -- (5) b = fl(√β)
+    let b : ℝ := Real.sqrt β
+    -- (6) w = fl(b • v)
+    let v : Vec n := b • v'
+    v
+
+
 
 end
 end QR
