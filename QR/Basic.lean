@@ -267,28 +267,5 @@ theorem fl_vec_dot_bound
     simp only [le_add_iff_nonneg_left, zero_le, sup_of_le_right] at add_bound
     simpa [dotProduct, Fin.sum_univ_succ, add_comm] using add_bound
 
-def householder (n : ℕ) (x : Vec n) : Vec n :=
-  if h : n = 0 then
-    x
-  else
-    -- (1) s = fl(sqrt(fl(xᵀx)))
-    let s : ℝ := ‖x‖
-    let σ : ℝ := if x ⟨0, Nat.pos_of_ne_zero h⟩ < 0 then -1 else 1
-    -- (2) v₀ = fl(x₀ + s)
-    let v₀ : ℝ := x ⟨0, Nat.pos_of_ne_zero h⟩ + σ * s
-    let v' : Vec n :=
-      fun i => if i = ⟨0, Nat.pos_of_ne_zero h⟩ then v₀ else x i
-    -- (3) p = fl(s * v₀)
-    let p : ℝ := s * v₀
-    -- (4) β = fl(1 / p)
-    let β : ℝ := 1 / p
-    -- (5) b = fl(√β)
-    let b : ℝ := Real.sqrt β
-    -- (6) w = fl(b • v)
-    let v : Vec n := b • v'
-    v
-
-
-
 end
 end QR
