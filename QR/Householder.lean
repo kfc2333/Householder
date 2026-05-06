@@ -153,29 +153,32 @@ lemma beta_nonneg (n : ℕ) (x : Vec n) (hn : n ≠ 0) :
     · simpa only [expand_l] using Real.sqrt_nonneg _
     · simpa only [mul_comm] using sign_mul_nonneg n x hn
   · exact mul_self_nonneg _
+lemma p_ne_zero (n : ℕ) (x : Vec n) (hn : n ≠ 0) (hx : x ≠ 0) :
+  let hv := householder n x hn
+  hv.p ≠ 0 := by
+  intro hv
+  rw [expand_p]
+  apply mul_ne_zero
+  · rw [expand_s]
+    apply mul_ne_zero
+    · rw [sign]
+      split_ifs <;> simp only [ne_eq, neg_eq_zero, one_ne_zero, not_false_eq_true]
+    · linarith [l_pos n x hn hx]
+  · rw [expand_v0, expand_s, sign]
+    by_cases h : x ⟨0, Nat.pos_of_ne_zero hn⟩ < 0
+    · simp only [h, if_true, neg_mul, one_mul]
+      linarith [h, l_pos n x hn hx]
+    · simp only [h, if_false, one_mul]
+      linarith [h, l_pos n x hn hx]
 lemma p_pos (n : ℕ) (x : Vec n) (hn : n ≠ 0) (hx : x ≠ 0) :
   let hv := householder n x hn
   hv.p > 0 := by
   intro hv
-  have : hv.p ≠ 0 := by
-    rw [expand_p]
-    apply mul_ne_zero
-    · rw [expand_s]
-      apply mul_ne_zero
-      · rw [sign]
-        split_ifs <;> simp only [ne_eq, neg_eq_zero, one_ne_zero, not_false_eq_true]
-      · linarith [l_pos n x hn hx]
-    · rw [expand_v0, expand_s, sign]
-      by_cases h : x ⟨0, Nat.pos_of_ne_zero hn⟩ < 0
-      · simp only [h, if_true, neg_mul, one_mul]
-        linarith [h, l_pos n x hn hx]
-      · simp only [h, if_false, one_mul]
-        linarith [h, l_pos n x hn hx]
   have beta_nonneg : hv.β ≥ 0 := beta_nonneg n x hn
   rw [expand_β] at beta_nonneg
   simp only [one_div, inv_nonneg] at beta_nonneg
   rw [← ge_iff_le] at beta_nonneg
-  exact lt_of_le_of_ne' beta_nonneg this
+  exact lt_of_le_of_ne' beta_nonneg (p_ne_zero n x hn hx)
 
 theorem e1_of_householder
   (n : ℕ)
@@ -202,10 +205,8 @@ theorem e1_of_householder
     · simp only [h, if_true, add_comm, Pi.add_apply]
     · simp only [h, if_false, Pi.add_apply, zero_add]
   have : (hv.β * hv.v' ⬝ᵥ x) = 1 := by
-    rw [expand_β, hv_back, this]
-    have : hv.p ≠ 0 := by
-      linarith [p_pos n x hn hx]
-    field_simp [this]
+    rw [expand_β, this]
+    field_simp [p_ne_zero n x hn hx]
     rw [add_dotProduct, expand_p, expand_v0, hv_back, left_distrib]
     have : (fun i ↦ if i = ⟨0, Nat.pos_of_ne_zero hn⟩ then hv.s else 0) ⬝ᵥ x = hv.s * x ⟨0, Nat.pos_of_ne_zero hn⟩ := by
       simp only [dotProduct, ite_mul, zero_mul, Finset.sum_ite_eq', Finset.mem_univ, if_true]
