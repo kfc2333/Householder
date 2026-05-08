@@ -10,11 +10,25 @@ namespace Basic
 noncomputable section
 variable (u : NNReal)
 
+lemma convert_hnu (n : ℕ) (a b c d : ℝ) (h₁ : c ≤ a) (h₂ : d ≤ b) (hnu : (a * n + b : ℝ) * (u : ℝ) < 1) : (c * n + d : ℝ) * (u : ℝ) < 1 := by
+  calc
+  _ ≤ (a * n + d) * (u : ℝ) := by
+    apply mul_le_mul_of_nonneg_right
+    · rw [add_le_add_iff_right]
+      exact mul_le_mul_of_nonneg_right h₁ (Nat.cast_nonneg n)
+    · exact u.2
+  _ ≤ (a * n + b) * (u : ℝ) := by
+    apply mul_le_mul_of_nonneg_right
+    · rw [add_le_add_iff_left]
+      exact h₂
+    · exact u.2
+  _ < _ := hnu
+
 abbrev Vec (n : ℕ) := Fin n → ℝ
 def norm {n : ℕ} (x : Vec n) : ℝ := √(∑ i, ‖x i‖ ^ 2)
 def γ (n : ℕ) : ℝ := (n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ))
 
-lemma gamma_nonneg (n : ℕ) (hnu : (n : ℝ) * (u : ℝ) < 1) : 0 ≤ γ u n := by
+lemma gamma_nonneg (n : ℕ) (hnu : (n : ℝ) * (u : ℝ) < 1) : γ u n ≥ 0 := by
   have h1: 0 ≤ (n : ℝ) * (u : ℝ) := by
     apply mul_nonneg
     · exact_mod_cast Nat.zero_le n
@@ -22,6 +36,17 @@ lemma gamma_nonneg (n : ℕ) (hnu : (n : ℝ) * (u : ℝ) < 1) : 0 ≤ γ u n :=
   have h2: 0 ≤ 1 - (n : ℝ) * (u : ℝ) := by
     linarith
   exact div_nonneg h1 h2
+lemma gamma_lt_one (n : ℕ) (hnu : 2 * (n : ℝ) * (u : ℝ) < 1) : γ u n < 1 := by
+  have h1: (n : ℝ) * (u : ℝ) < 1 / 2 := by linarith
+  have h2: 1 - (n : ℝ) * (u : ℝ) ≥ 1 / 2 := by linarith
+  have h3: (n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ)) < (1 / 2) / (1 / 2) := by
+    apply div_lt_div₀
+    · exact h1
+    · exact h2
+    · linarith
+    · linarith
+  simp only [one_div, ne_eq, inv_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true, div_self] at h3
+  simpa only [γ] using h3
 
 lemma gamma_monotune (n₁ n₂ : ℕ) (hnu₁ : (n₁ : ℝ) * (u : ℝ) < 1) (hnu₂ : (n₂ : ℝ) * (u : ℝ) < 1) (hle : n₁ ≤ n₂) :
   γ u n₁ ≤ γ u n₂ := by
@@ -81,6 +106,18 @@ lemma diff_gamma_bound_theta_iff_diff_gamma_bound (n : ℕ) (hnu : (n : ℝ) * (
         field_simp [hx]
         rw [mul_comm, abs_sub_comm]
         exact h
+
+lemma pos_diff_gamma_bound_pos (n : ℕ) (x x' : ℝ) (hnu : 2 * (n : ℝ) * (u : ℝ) < 1) (hx : x > 0) (hbound : diff_gamma_bound u n x x') :
+  x' > 0 := by
+  rw [diff_gamma_bound, abs_of_pos hx] at hbound
+  rw [abs_le'] at hbound
+  have : x - x' < x := by
+    calc
+    _ ≤ γ u n * x := hbound.1
+    _ < x := by
+      apply mul_lt_of_lt_one_left hx
+      exact gamma_lt_one u n hnu
+  linarith
 
 -- we use η represents 1 + θ
 def gamma_bound (n : ℕ) (η : ℝ) : Prop :=
