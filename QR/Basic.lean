@@ -3,13 +3,15 @@ import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Real.Basic
 open scoped BigOperators
+open scoped Matrix.Norms.Frobenius
 set_option linter.style.longLine false
 
-namespace QR
+namespace Basic
 noncomputable section
 variable (u : NNReal)
 
 abbrev Vec (n : ℕ) := Fin n → ℝ
+def norm {n : ℕ} (x : Vec n) : ℝ := √(∑ i, ‖x i‖ ^ 2)
 def γ (n : ℕ) : ℝ := (n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ))
 
 lemma gamma_nonneg (n : ℕ) (hnu : (n : ℝ) * (u : ℝ) < 1) : 0 ≤ γ u n := by
@@ -115,7 +117,7 @@ lemma gamma_bound_monotune (n₁ n₂ : ℕ) (η : ℝ) (hnu₁ : (n₁ : ℝ) *
   rw [gamma_bound] at hη ⊢
   exact le_trans hη (gamma_monotune u n₁ n₂ hnu₁ hnu₂ hle)
 
-theorem diff_gamma_bound_mul (n₁ n₂ : ℕ) (x x' x'' : ℝ) (hnu : ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) < 1) (hbound₁ : diff_gamma_bound u n₁ x x') (hbound₂ : diff_gamma_bound u n₂ x' x'') :
+theorem diff_gamma_bound_trans (n₁ n₂ : ℕ) (x x' x'' : ℝ) (hnu : ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) < 1) (hbound₁ : diff_gamma_bound u n₁ x x') (hbound₂ : diff_gamma_bound u n₂ x' x'') :
   diff_gamma_bound u (n₁ + n₂) x x'' := by
   have hnu₁ : (n₁ : ℝ) * (u : ℝ) < 1 := by
     sorry
@@ -156,15 +158,14 @@ theorem diff_gamma_bound_mul (n₁ n₂ : ℕ) (x x' x'' : ℝ) (hnu : ((n₁ : 
   · simpa [Nat.cast_add] using hnu
   · exact hnu₂
   · exact hnu₁
-
-lemma gamma_bound_mul (n₁ n₂ : ℕ) (η₁ η₂ : ℝ) (hnu : ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) < 1) (hη₁ : gamma_bound u n₁ η₁) (hη₂ : gamma_bound u n₂ η₂) :
+lemma gamma_bound_trans (n₁ n₂ : ℕ) (η₁ η₂ : ℝ) (hnu : ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) < 1) (hη₁ : gamma_bound u n₁ η₁) (hη₂ : gamma_bound u n₂ η₂) :
   gamma_bound u (n₁ + n₂) (η₁ * η₂) := by
   sorry
 
 
 def fl (x x' : ℝ) : Prop :=
   ∃ δ : ℝ, |δ| ≤ (u : ℝ) ∧ x * (1 + δ) = x'
-lemma fl_gammma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
+lemma fl_to_gammma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
   fl u x x' → diff_gamma_bound u 1 x x' := by
   rintro ⟨δ, hδ, hfl⟩
   rw [diff_gamma_bound, ← hfl]
@@ -186,10 +187,12 @@ lemma fl_gammma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
 lemma fl_bound (n : ℕ) (x x' x'' : ℝ) (hnu : ((n : ℝ) + 1) * (u : ℝ) < 1) (hbound : diff_gamma_bound u n x x') (hfl : fl u x' x'') :
   diff_gamma_bound u (n + 1) x x'' := by
   have hbound' : diff_gamma_bound u 1 x' x'' := by
-    apply fl_gammma_bound u x' x''
+    apply fl_to_gammma_bound u x' x''
     · sorry
     · exact hfl
   sorry
+
+def diff_gamma_bound_vec (n : ℕ) {m : ℕ} (x : Vec m) (x' : Vec m) : Prop := diff_gamma_bound u n (norm x) (norm x')
 
 def fl_add (x y z : ℝ) : Prop :=
   fl u (x + y) z
@@ -200,6 +203,7 @@ def fl_add_bound
   (nx ny : ℕ)
   (x y x' y' z : ℝ)
   (hfl_add : fl_add u x' y' z)
+  (hnu : ((nx ⊔ ny) + 1 : ℝ) * (u : ℝ) < 1)
   (hboundx : diff_gamma_bound u nx x x')
   (hboundy : diff_gamma_bound u ny y y') :
   diff_gamma_bound u ((nx ⊔ ny) + 1) (x + y) z := by sorry
@@ -207,46 +211,37 @@ def fl_mul_bound
   (nx ny : ℕ)
   (x y x' y' z : ℝ)
   (hfl_mul : fl_mul u x' y' z)
+  (hnu : ((nx + ny) + 1 : ℝ) * (u : ℝ) < 1)
   (hboundx : diff_gamma_bound u nx x x')
   (hboundy : diff_gamma_bound u ny y y') :
   diff_gamma_bound u ((nx + ny) + 1) (x * y) z := by sorry
 
-def fl_vec_dot : (n : ℕ) → Vec n → Vec n → ℝ → Prop
+def fl_smul_vec (a : ℝ) (x : Vec n) (y : Vec n) : Prop :=
+  ∀ i, fl u (a * x i) (y i)
+lemma fl_smul_vec_bound
+  (n : ℕ)
+  (a : ℝ)
+  (x x' x'' : Vec m)
+  (hnu : (n + 1 : ℝ) * (u : ℝ) < 1)
+  (hbound : diff_gamma_bound_vec u n x x')
+  (hfl : fl_smul_vec u a x' x'') :
+  diff_gamma_bound_vec u (n + 1) x x'' := by
+  sorry
+
+def fl_vec_dot : {n : ℕ} → Vec n → Vec n → ℝ → Prop
   | 0, _, _, z => z = 0
   | n + 1, x, y, z =>
     ∃ p s : ℝ,
       fl_mul u (x 0) (y 0) p ∧
-      fl_vec_dot n (fun i => x (Fin.succ i)) (fun i => y (Fin.succ i)) s ∧
+      fl_vec_dot (fun i => x (Fin.succ i)) (fun i => y (Fin.succ i)) s ∧
       fl_add u p s z
-
--- lemma fl_vec_dot_bound_delta
---   (n : ℕ)
---   (x y : Vec n)
---   (z : ℝ)
---   (hfl : fl_vec_dot u n x y z) :
---   ∃ θ : Fin n → ℝ,
---     z = ∑ i, x i * y i * (1 + θ i) ∧
---     (∀ i, |θ i| ≤ γ u (if (i : ℕ) = 0 then n else (n - i + 1))) :=
---   by induction n generalizing z with
---   | zero =>
---     exists fun _ => 0
---     simp only [fl_vec_dot] at hfl
---     simp only [Finset.univ_eq_empty, add_zero, mul_one, Finset.sum_empty, abs_zero, γ, Nat.cast_ite,
---     CharP.cast_eq_zero, ite_mul, zero_mul, IsEmpty.forall_iff, and_true]
---     exact hfl
---   | succ n ih =>
---     -- p: product, i.e. x0 * y0.
---     -- s: sum of the rest, i.e. ∑ i, x i.succ * y i.succ * (1 + θ_ih i)
---     obtain ⟨p, s, hp, hfl_vec_dot, hfl_add⟩ := hfl
---     obtain ⟨θ_ih, hθ_ih⟩ := ih (fun i => x (Fin.castSucc i)) (fun i => y (Fin.castSucc i)) s hfl_vec_dot
---     sorry
 
 theorem fl_vec_dot_bound
   (n : ℕ)
   (hnu : ((n : ℝ) + 1) * (u : ℝ) < 1)
   (x y : Vec n)
   (z : ℝ)
-  (hfl : fl_vec_dot u n x y z) :
+  (hfl : fl_vec_dot u x y z) :
   diff_gamma_bound u (n + 1) (x ⬝ᵥ y) z := by
   induction n generalizing z with
   | zero =>
@@ -260,12 +255,12 @@ theorem fl_vec_dot_bound
     obtain ⟨p, s, hp, hfl_vec_dot, hfl_add⟩ := hfl
     have s_bound : diff_gamma_bound u (n + 1) (∑ i, x (Fin.succ i) * y (Fin.succ i)) s := ih hnu_n (fun i => x (Fin.succ i)) (fun i => y (Fin.succ i)) s hfl_vec_dot
     have p_bound : diff_gamma_bound u 1 (x 0 * y 0) p := by
-      apply fl_gammma_bound u (x 0 * y 0) p
+      apply fl_to_gammma_bound u (x 0 * y 0) p
       · sorry
       · exact hp
-    have add_bound := fl_add_bound u 1 (n + 1) (x 0 * y 0) (∑ i, x (Fin.succ i) * y (Fin.succ i)) p s z hfl_add p_bound s_bound
+    have add_bound := fl_add_bound u 1 (n + 1) (x 0 * y 0) (∑ i, x (Fin.succ i) * y (Fin.succ i)) p s z hfl_add hnu p_bound s_bound
     simp only [le_add_iff_nonneg_left, zero_le, sup_of_le_right] at add_bound
     simpa [dotProduct, Fin.sum_univ_succ, add_comm] using add_bound
 
 end
-end QR
+end Basic

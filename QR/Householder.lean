@@ -5,13 +5,13 @@ import Mathlib.Data.Real.Basic
 import QR.Basic
 open scoped BigOperators
 open Matrix
-open QR
+open Basic
 set_option linter.style.longLine false
 set_option linter.dupNamespace false
 
 namespace Householder
 noncomputable section
--- σ = - sign(x₀) * ‖x‖
+-- σ = - sign(x₀) * √(xᵀx)
 def sign {n : ℕ} (x : Vec n) (hn : n ≠ 0) : ℝ :=
   if x ⟨0, Nat.pos_of_ne_zero hn⟩ < 0 then -1 else 1
 lemma sign_mul_nonneg (n : ℕ) (x : Vec n) (hn : n ≠ 0) : sign x hn * x ⟨0, Nat.pos_of_ne_zero hn⟩ ≥ 0 := by
@@ -48,18 +48,17 @@ by
   -- (2) l = fl(sqrt(l'))
   let l := Real.sqrt l'
   let s := sign x hn * l
-  -- (4) v₀ = fl(x₀ + s)
+  -- (3) v₀ = fl(x₀ + s)
   let v0 := x i₀ + s
-  -- (3) p = fl(s * v₀)
+  -- (4) p = fl(s * v₀)
   let p := s * v0
-  -- (4) β = fl(1 / p)
+  -- (5) β = fl(1 / p)
   let β := 1 / p
-  -- (5) b = fl(√β)
+  -- (6) b = fl(√β)
   let b := Real.sqrt β
-  -- (6) v = fl(b • v')
+  -- (7) v = fl(b • v')
   let v' : Vec n := fun i => if i = i₀ then v0 else x i
   let v := b • v'
-  -- constr
   exact {
     l' := l',
     l := l,
@@ -180,14 +179,16 @@ lemma p_pos (n : ℕ) (x : Vec n) (hn : n ≠ 0) (hx : x ≠ 0) :
   rw [← ge_iff_le] at beta_nonneg
   exact lt_of_le_of_ne' beta_nonneg (p_ne_zero n x hn hx)
 
-theorem e1_of_householder
+def e₁ (n : ℕ) (x : Vec n) (hn : n ≠ 0) : Vec n := fun i => if i = ⟨0, Nat.pos_of_ne_zero hn⟩ then - sign x hn * Real.sqrt (x ⬝ᵥ x) else 0
+
+theorem e₁_of_householder
   (n : ℕ)
   (x : Vec n)
   (hn : n ≠ 0)
   (hx : x ≠ 0) :
   let hv := householder n x hn
   let P := 1 - (vecMulVec hv.v hv.v)
-  P • x = fun i => if i = ⟨0, Nat.pos_of_ne_zero hn⟩ then - sign x hn * Real.sqrt (x ⬝ᵥ x) else 0 := by
+  P • x = e₁ n x hn := by
   intro hv P
   have : P • x = x - (hv.v ⬝ᵥ x) • hv.v := by
     unfold P
@@ -229,6 +230,7 @@ theorem e1_of_householder
     rw [this]
     simp only [one_smul]
   rw [this]
+  unfold e₁
   ext i
   by_cases h : i = ⟨0, Nat.pos_of_ne_zero hn⟩
   · rw [if_pos h, h, expand_v', expand_v0, expand_s, expand_l, expand_l']
