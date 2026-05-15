@@ -299,5 +299,108 @@ theorem fl_vec_dot_bound
     simp only [le_add_iff_nonneg_left, zero_le, sup_of_le_right] at add_bound
     simpa [dotProduct, Fin.sum_univ_succ, add_comm] using add_bound
 
+lemma sqrt_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x ≥ 0) (hnu : 2 * (n : ℝ) * (u : ℝ) < 1) (h_bound : diff_gamma_bound u n x x') :
+  diff_gamma_bound u n (Real.sqrt x) (Real.sqrt x') := by
+  rw [diff_gamma_bound] at h_bound ⊢
+  by_cases h : x = 0
+  · simp only [h, zero_sub, abs_neg, abs_zero, mul_zero, abs_nonpos_iff,
+    Real.sqrt_zero] at h_bound ⊢
+    rw [h_bound]
+    simp only [Real.sqrt_zero]
+  · rw [← ne_eq] at h
+    have hx' : x > 0 := lt_of_le_of_ne hx h.symm
+    have hx'' : x' > 0 := pos_diff_gamma_bound_pos u n x x' hnu hx' h_bound
+    have : |√x - √x'| * |√x| ≤ γ u n * |√x| * |√x| := by
+      calc
+        _ ≤ |√x - √x'| * |√x + √x'| := by
+          apply mul_le_mul_of_nonneg_left
+          · apply abs_le_abs_of_nonneg
+            · exact Real.sqrt_nonneg x
+            · simp only [le_add_iff_nonneg_right, Real.sqrt_nonneg]
+          · exact abs_nonneg _
+        _ = |x - x'| := by
+          rw [← abs_mul]
+          ring_nf
+          rw [Real.sq_sqrt (by linarith [hx']), Real.sq_sqrt (by linarith [hx''])]
+        _ ≤ γ u n * |x| := h_bound
+        _ = _ := by
+          rw [mul_assoc, ← abs_mul, Real.mul_self_sqrt]
+          linarith
+    have hx' := abs_pos.2 ((Real.sqrt_ne_zero hx).2 h)
+    simp only [hx', mul_le_mul_iff_left₀] at this
+    exact this
+
+lemma div_inv_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x > 0) (hnu : 2 * (n : ℝ) * (u : ℝ) < 1) (h_bound : diff_gamma_bound u n x x') :
+  -- have hx' : x' > 0 := pos_diff_gamma_bound_pos u n x x' hnu hx h_bound
+  diff_gamma_bound u (2 * n) (1 / x) (1 / x') := by
+  apply (diff_gamma_bound_theta_iff_diff_gamma_bound u (2 * n) (by simpa only [Nat.cast_mul, Nat.cast_ofNat] using hnu) (1 / x) (1 / x')).1
+  rw [(diff_gamma_bound_theta_iff_diff_gamma_bound u n (by linarith [hnu]) x x').symm] at h_bound
+  rw [diff_gamma_bound_theta] at h_bound ⊢
+  rcases h_bound with ⟨θ, hθ, hθ_bound⟩
+  have : |θ| < 1 := by
+    exact lt_of_le_of_lt hθ_bound (gamma_lt_one u n hnu)
+  have hd_pos : 1 + θ > 0 := by
+    linarith [abs_lt.mp this]
+  have hnu_ne : 1 - 2 * (n : ℝ) * (u : ℝ) ≠ 0 := by
+    linarith [hnu]
+  exists - θ / (1 + θ)
+  constructor
+  · rw [hθ]
+    field_simp [hx, hd_pos]
+    ring
+  · by_cases hθ_sign : θ < 0
+    · rw [abs_of_nonneg]
+      · have : -θ / (1 + θ) = 1 / (1 + θ) - 1 := by
+          field_simp [hd_pos]
+          linarith
+        rw [this]
+        suffices h : 1 / (1 + θ) ≤ 1 + γ u (2 * n) by linarith
+        have : 1 + γ u (2 * n) = 1 / (1 - ((2 * n) : ℝ) * (u : ℝ)) := by
+          rw [γ]
+          field_simp [hnu_ne]
+          simp only [Nat.cast_mul, Nat.cast_ofNat, sub_add_cancel]
+          field_simp [mul_comm, mul_assoc]
+        rw [this]
+        apply div_le_div₀ (by linarith) (by linarith) (by linarith)
+        suffices h : - θ ≤ 2 * (n : ℝ) * (u : ℝ) by linarith
+        apply le_trans (neg_le.1 (abs_le.1 hθ_bound).1)
+        rw [γ]
+        field_simp
+        apply mul_le_mul_of_nonneg (by linarith)
+        · have : 1 - (n : ℝ) * (u : ℝ) > 0 := by linarith [hnu]
+          field_simp [this]
+          linarith
+        · exact mul_nonneg (Nat.cast_nonneg n) (u.2)
+        · linarith
+      · field_simp [hd_pos, hθ_sign]
+        linarith
+    · rw [abs_of_nonpos]
+      · have : -(-θ / (1 + θ)) = 1 - 1 / (1 + θ) := by
+          field_simp [hd_pos]
+          linarith
+        rw [this]
+        suffices h : 1 / (1 + θ) ≥ 1 - γ u (2 * n) by linarith
+        by_cases h2nu_pos : 1 - γ u (2 * n) ≤ 0
+        · have : 1 / (1 + θ) > 0 := by
+            field_simp [hd_pos]
+            linarith [h2nu_pos]
+          linarith
+        · apply (le_one_div hd_pos (by linarith [h2nu_pos])).1
+          have := (abs_le.1 hθ_bound).2
+          suffices h : γ u n + 1 ≤ 1 / (1 - γ u (2 * n)) by linarith [this]
+          apply (le_div_iff₀ (not_le.1 h2nu_pos)).2
+          ring_nf
+          have h1 : γ u n ≤ γ u (n * 2) := by
+            exact gamma_monotune u n (n * 2) (by linarith) (by simpa only [Nat.cast_mul, Nat.cast_ofNat, mul_comm] using hnu) (by linarith)
+          have h2 : γ u n * γ u (n * 2) ≥ 0 := by
+            apply mul_nonneg
+            · exact gamma_nonneg u n (by linarith)
+            · exact gamma_nonneg u (n * 2) (by simpa only [Nat.cast_mul, Nat.cast_ofNat, mul_comm] using hnu)
+          linarith [h1, h2]
+      · field_simp [hd_pos, hθ_sign]
+        rw [mul_zero]
+        simp at hθ_sign
+        linarith
+
 end
 end Basic
