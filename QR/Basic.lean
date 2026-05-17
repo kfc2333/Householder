@@ -200,10 +200,33 @@ lemma diff_gamma_bound_iff_gamma_bound (n : ℕ) (hnu : (n : ℝ) * (u : ℝ) < 
     field_simp [hx] at h₁
     exact h₁
 
-lemma gamma_bound_monotune (n₁ n₂ : ℕ) (η : ℝ) (hnu₁ : (n₁ : ℝ) * (u : ℝ) < 1) (hnu₂ : (n₂ : ℝ) * (u : ℝ) < 1) (hle : n₁ ≤ n₂) (hη : gamma_bound u n₁ η) :
+lemma gamma_bound_monotune (n₁ n₂ : ℕ) (η : ℝ) (hnu : (n₂ : ℝ) * (u : ℝ) < 1) (hle : n₁ ≤ n₂) (hη : gamma_bound u n₁ η) :
   gamma_bound u n₂ η := by
+  have hnu' : (n₁ : ℝ) * (u : ℝ) < 1 := by
+    calc
+    _ ≤ (n₂ : ℝ) * (u : ℝ) := by
+      apply mul_le_mul_of_nonneg_right
+      · exact_mod_cast hle
+      · exact u.2
+    _ < _ := hnu
   rw [gamma_bound] at hη ⊢
-  exact le_trans hη (gamma_monotune u n₁ n₂ hnu₁ hnu₂ hle)
+  exact le_trans hη (gamma_monotune u n₁ n₂ hnu' hnu hle)
+lemma diff_gamma_bound_monotune (n₁ n₂ : ℕ) (x x' : ℝ) (hnu : (n₂ : ℝ) * (u : ℝ) < 1) (hle : n₁ ≤ n₂) (hbound : diff_gamma_bound u n₁ x x') :
+  diff_gamma_bound u n₂ x x' := by
+  have hnu' : (n₁ : ℝ) * (u : ℝ) < 1 := by
+    calc
+    _ ≤ (n₂ : ℝ) * (u : ℝ) := by
+      apply mul_le_mul_of_nonneg_right
+      · exact_mod_cast hle
+      · exact u.2
+    _ < _ := hnu
+  rw [diff_gamma_bound] at hbound ⊢
+  calc
+  _ ≤ γ u n₁ * |x| := hbound
+  _ ≤ γ u n₂ * |x| := by
+    apply mul_le_mul_of_nonneg_right
+    · exact gamma_monotune u n₁ n₂ hnu' hnu hle
+    · exact abs_nonneg _
 
 theorem diff_gamma_bound_trans (n₁ n₂ : ℕ) (x x' x'' : ℝ) (hnu : ((n₁ + n₂) : ℝ) * (u : ℝ) < 1) (hbound₁ : diff_gamma_bound u n₁ x x') (hbound₂ : diff_gamma_bound u n₂ x' x'') :
   diff_gamma_bound u (n₁ + n₂) x x'' := by
@@ -243,9 +266,6 @@ theorem diff_gamma_bound_trans (n₁ n₂ : ℕ) (x x' x'' : ℝ) (hnu : ((n₁ 
   · simpa [Nat.cast_add] using hnu
   · exact hnu₂
   · exact hnu₁
--- lemma gamma_bound_trans (n₁ n₂ : ℕ) (η₁ η₂ : ℝ) (hnu : ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) < 1) (hη₁ : gamma_bound u n₁ η₁) (hη₂ : gamma_bound u n₂ η₂) :
---   gamma_bound u (n₁ + n₂) (η₁ * η₂) := by
---   sorry
 
 lemma add_bound_nonneg
   (nx ny : ℕ)
@@ -388,7 +408,7 @@ lemma fl_bound (n : ℕ) (x x' x'' : ℝ) (hnu : ((n : ℝ) + 1) * (u : ℝ) < 1
     · exact hfl
   exact diff_gamma_bound_trans u n 1 x x' x'' (by simpa only [Nat.cast_one] using hnu) hbound hbound'
 
-def diff_gamma_bound_vec (n : ℕ) {m : ℕ} (x : Vec m) (x' : Vec m) : Prop := diff_gamma_bound u n (norm x) (norm x')
+def diff_gamma_bound_vec (n : ℕ) {m : ℕ} (x : Vec m) (x' : Vec m) : Prop := ∀ i, diff_gamma_bound u n (x i) (x' i)
 
 def fl_add (x y z : ℝ) : Prop :=
   fl u (x + y) z
@@ -493,22 +513,6 @@ lemma fl_mul_bound
 
 def fl_smul_vec (a : ℝ) (x : Vec n) (y : Vec n) : Prop :=
   ∀ i, fl u (a * x i) (y i)
-lemma fl_smul_vec_bound
-  (n : ℕ)
-  (a : ℝ)
-  (x x' : Vec n)
-  (hfl : fl_smul_vec u a x x') :
-  diff_gamma_bound_vec u 1 (a • x) x' := by
-  sorry
--- lemma fl_smul_vec_bound'
---   (n : ℕ)
---   (a : ℝ)
---   (x x' x'' : Vec m)
---   (hnu : (n + 1 : ℝ) * (u : ℝ) < 1)
---   (hbound : diff_gamma_bound_vec u n x x')
---   (hfl : fl_smul_vec u a x' x'') :
---   diff_gamma_bound_vec u (n + 1) x x'' := by
---   sorry
 
 def fl_vec_dot : {n : ℕ} → Vec n → Vec n → ℝ → Prop
   | 0, _, _, z => z = 0
