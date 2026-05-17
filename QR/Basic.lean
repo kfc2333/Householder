@@ -157,9 +157,19 @@ lemma gamma_bound_monotune (n₁ n₂ : ℕ) (η : ℝ) (hnu₁ : (n₁ : ℝ) *
 theorem diff_gamma_bound_trans (n₁ n₂ : ℕ) (x x' x'' : ℝ) (hnu : ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) < 1) (hbound₁ : diff_gamma_bound u n₁ x x') (hbound₂ : diff_gamma_bound u n₂ x' x'') :
   diff_gamma_bound u (n₁ + n₂) x x'' := by
   have hnu₁ : (n₁ : ℝ) * (u : ℝ) < 1 := by
-    sorry
+    calc
+    _ ≤ ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) := by
+      apply mul_le_mul_of_nonneg_right
+      · linarith
+      · exact u.2
+    _ < _ := hnu
   have hnu₂ : (n₂ : ℝ) * (u : ℝ) < 1 := by
-    sorry
+    calc
+    _ ≤ ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) := by
+      apply mul_le_mul_of_nonneg_right
+      · linarith
+      · exact u.2
+    _ < _ := hnu
   have hnu₁_neq : (1 - (n₁ : ℝ) * (u : ℝ)) ≠ 0 := by linarith
   have hnu₂_neq : (1 - (n₂ : ℝ) * (u : ℝ)) ≠ 0 := by linarith
   have hnu_neq : (1 - ((n₁ + n₂) : ℝ) * (u : ℝ)) ≠ 0 := by linarith
@@ -179,7 +189,17 @@ theorem diff_gamma_bound_trans (n₁ n₂ : ℕ) (x x' x'' : ℝ) (hnu : ((n₁ 
       exact add_sub_cancel _ _
     _ ≤ 1 / (1 - ((n₁ + n₂) : ℝ) * (u : ℝ)) := by
       field_simp
-      sorry
+      apply div_le_div₀
+      · linarith
+      · linarith [hnu]
+      · linarith
+      · ring_nf
+        simp only [le_add_iff_nonneg_right]
+        apply mul_nonneg
+        · apply mul_nonneg
+          · exact sq_nonneg _
+          · exact_mod_cast Nat.zero_le n₁
+        · exact_mod_cast Nat.zero_le n₂
     _ = γ u (n₁ + n₂) + 1 := by
       rw [γ]
       sorry
@@ -195,10 +215,70 @@ theorem diff_gamma_bound_trans (n₁ n₂ : ℕ) (x x' x'' : ℝ) (hnu : ((n₁ 
   · simpa [Nat.cast_add] using hnu
   · exact hnu₂
   · exact hnu₁
-lemma gamma_bound_trans (n₁ n₂ : ℕ) (η₁ η₂ : ℝ) (hnu : ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) < 1) (hη₁ : gamma_bound u n₁ η₁) (hη₂ : gamma_bound u n₂ η₂) :
-  gamma_bound u (n₁ + n₂) (η₁ * η₂) := by
-  sorry
+-- lemma gamma_bound_trans (n₁ n₂ : ℕ) (η₁ η₂ : ℝ) (hnu : ((n₁ : ℝ) + (n₂ : ℝ)) * (u : ℝ) < 1) (hη₁ : gamma_bound u n₁ η₁) (hη₂ : gamma_bound u n₂ η₂) :
+--   gamma_bound u (n₁ + n₂) (η₁ * η₂) := by
+--   sorry
 
+lemma add_bound_nonneg
+  (nx ny : ℕ)
+  (x y x' y' : ℝ)
+  (hx : x ≥ 0) (hy : y ≥ 0)
+  (hnu : ((nx ⊔ ny) : ℝ) * (u : ℝ) < 1)
+  (hboundx : diff_gamma_bound u nx x x')
+  (hboundy : diff_gamma_bound u ny y y') :
+  diff_gamma_bound u (nx ⊔ ny) (x + y) (x' + y') := by
+  have hnx : (nx : ℝ) * (u : ℝ) < 1 := by
+    calc
+    _ ≤ ((nx ⊔ ny) : ℝ) * (u : ℝ) := by
+      apply mul_le_mul_of_nonneg_right
+      · exact_mod_cast le_sup_left
+      · exact u.2
+    _ < _ := hnu
+  have hny : (ny : ℝ) * (u : ℝ) < 1 := by
+    calc
+    _ ≤ ((nx ⊔ ny) : ℝ) * (u : ℝ) := by
+      apply mul_le_mul_of_nonneg_right
+      · exact_mod_cast le_sup_right
+      · exact u.2
+    _ < _ := hnu
+  rw [diff_gamma_bound] at hboundx hboundy ⊢
+  calc
+  _ = |x - x' + (y - y')| := by
+    ring_nf
+  _ ≤ |x - x'| + |y - y'| := by
+    exact abs_add_le (x - x') (y - y')
+  _ ≤ γ u nx * |x| + γ u ny * |y| := by
+    exact add_le_add hboundx hboundy
+  _ ≤ γ u (nx ⊔ ny) * |x| + γ u (nx ⊔ ny) * |y| := by
+    gcongr
+    · exact gamma_monotune u nx (nx ⊔ ny) hnx (by simpa only [Nat.cast_max] using hnu) (le_sup_left)
+    · exact gamma_monotune u ny (nx ⊔ ny) hny (by simpa only [Nat.cast_max] using hnu) (le_sup_right)
+  _ = γ u (nx ⊔ ny) * (|x| + |y|) := by linarith
+  _ ≤ _ := by
+    apply mul_le_mul_of_nonneg_left
+    · rw [abs_of_nonneg hx, abs_of_nonneg hy]
+      exact le_abs_self (x + y)
+    · exact gamma_nonneg u (nx ⊔ ny) (by simpa only [Nat.cast_max] using hnu)
+lemma add_bound_nonpos
+  (nx ny : ℕ)
+  (x y x' y' : ℝ)
+  (hx : x ≤ 0) (hy : y ≤ 0)
+  (hnu : ((nx ⊔ ny) : ℝ) * (u : ℝ) < 1)
+  (hboundx : diff_gamma_bound u nx x x')
+  (hboundy : diff_gamma_bound u ny y y') :
+  diff_gamma_bound u (nx ⊔ ny) (x + y) (x' + y') := by
+  have hboundx' : diff_gamma_bound u nx (-x) (-x') := by
+    rw [diff_gamma_bound] at hboundx ⊢
+    rw [sub_neg_eq_add, abs_neg, ← abs_neg, neg_add_rev, neg_neg, add_comm, ← sub_eq_add_neg]
+    exact hboundx
+  have hboundy' : diff_gamma_bound u ny (-y) (-y') := by
+    rw [diff_gamma_bound] at hboundy ⊢
+    rw [sub_neg_eq_add, abs_neg, ← abs_neg, neg_add_rev, neg_neg, add_comm, ← sub_eq_add_neg]
+    exact hboundy
+  have := add_bound_nonneg u nx ny (-x) (-y) (-x') (-y') (by linarith) (by linarith) hnu hboundx' hboundy'
+  rw [diff_gamma_bound] at this ⊢
+  rw [← neg_add, abs_neg, ← abs_neg, neg_sub, sub_neg_eq_add, ← neg_add, neg_add_eq_sub] at this
+  exact this
 
 def fl (x x' : ℝ) : Prop :=
   ∃ δ : ℝ, |δ| ≤ (u : ℝ) ∧ x * (1 + δ) = x'
@@ -236,14 +316,38 @@ def fl_add (x y z : ℝ) : Prop :=
 def fl_mul (x y z : ℝ) : Prop :=
   fl u (x * y) z
 
-def fl_add_bound
+lemma fl_add_bound
   (nx ny : ℕ)
   (x y x' y' z : ℝ)
+  (hx : x ≥ 0) (hy : y ≥ 0)
   (hfl_add : fl_add u x' y' z)
   (hnu : ((nx ⊔ ny) + 1 : ℝ) * (u : ℝ) < 1)
   (hboundx : diff_gamma_bound u nx x x')
   (hboundy : diff_gamma_bound u ny y y') :
-  diff_gamma_bound u ((nx ⊔ ny) + 1) (x + y) z := by sorry
+  diff_gamma_bound u ((nx ⊔ ny) + 1) (x + y) z := by
+    have hu : (u : ℝ) < 1 := by
+      calc
+      _ = 1 * (u : ℝ) := by exact (one_mul (u : ℝ)).symm
+      _ ≤ ((nx ⊔ ny) + 1 : ℝ) * (u : ℝ) := by
+        apply mul_le_mul_of_nonneg_right
+        · linarith
+        · exact u.2
+      _ < _ := hnu
+    have hnu' : ((nx ⊔ ny) : ℝ) * (u : ℝ) < 1 := by
+      calc
+      _ ≤ ((nx ⊔ ny) + 1 : ℝ) * (u : ℝ) := by
+        apply mul_le_mul_of_nonneg_right
+        · simp only [Nat.cast_max, le_add_iff_nonneg_right, zero_le_one]
+        · exact u.2
+      _ < _ := hnu
+    rw [fl_add] at hfl_add
+    have h1 : diff_gamma_bound u 1 (x' + y') z := by
+      apply fl_to_gammma_bound u (x' + y') z
+      · exact hu
+      · exact hfl_add
+    have h2 : diff_gamma_bound u (nx ⊔ ny) (x + y) (x' + y') := by
+      exact add_bound_nonneg u nx ny x y x' y' hx hy hnu' hboundx hboundy
+    exact diff_gamma_bound_trans u (nx ⊔ ny) 1 (x + y) (x' + y') z (by simpa only [Nat.cast_one] using hnu) h2 h1
 def fl_mul_bound
   (nx ny : ℕ)
   (x y x' y' z : ℝ)
@@ -258,12 +362,19 @@ def fl_smul_vec (a : ℝ) (x : Vec n) (y : Vec n) : Prop :=
 lemma fl_smul_vec_bound
   (n : ℕ)
   (a : ℝ)
-  (x x' x'' : Vec m)
-  (hnu : (n + 1 : ℝ) * (u : ℝ) < 1)
-  (hbound : diff_gamma_bound_vec u n x x')
-  (hfl : fl_smul_vec u a x' x'') :
-  diff_gamma_bound_vec u (n + 1) x x'' := by
+  (x x' : Vec n)
+  (hfl : fl_smul_vec u a x x') :
+  diff_gamma_bound_vec u 1 (a • x) x' := by
   sorry
+-- lemma fl_smul_vec_bound'
+--   (n : ℕ)
+--   (a : ℝ)
+--   (x x' x'' : Vec m)
+--   (hnu : (n + 1 : ℝ) * (u : ℝ) < 1)
+--   (hbound : diff_gamma_bound_vec u n x x')
+--   (hfl : fl_smul_vec u a x' x'') :
+--   diff_gamma_bound_vec u (n + 1) x x'' := by
+--   sorry
 
 def fl_vec_dot : {n : ℕ} → Vec n → Vec n → ℝ → Prop
   | 0, _, _, z => z = 0
@@ -276,26 +387,38 @@ def fl_vec_dot : {n : ℕ} → Vec n → Vec n → ℝ → Prop
 theorem fl_vec_dot_bound
   (n : ℕ)
   (hnu : ((n : ℝ) + 1) * (u : ℝ) < 1)
-  (x y : Vec n)
+  (x : Vec n)
   (z : ℝ)
-  (hfl : fl_vec_dot u x y z) :
-  diff_gamma_bound u (n + 1) (x ⬝ᵥ y) z := by
+  (hfl : fl_vec_dot u x x z) :
+  diff_gamma_bound u (n + 1) (x ⬝ᵥ x) z := by
   induction n generalizing z with
   | zero =>
     simp only [fl_vec_dot] at hfl
     simp only [diff_gamma_bound, Matrix.dotProduct_of_isEmpty, hfl, sub_self, abs_zero, zero_add, mul_zero, Std.le_refl]
   | succ n ih =>
+    have hu : (u : ℝ) < 1 := by
+      calc
+      _ = 1 * (u : ℝ) := by exact (one_mul (u : ℝ)).symm
+      _ ≤ ((n : ℝ) + 1 + 1) * (u : ℝ) := by
+        apply mul_le_mul_of_nonneg_right
+        · linarith
+        · exact u.2
+      _ < _ := by simpa only [Nat.cast_add, Nat.cast_one] using hnu
     have hnu_n : ((n : ℝ) + 1) * (u : ℝ) < 1 := by
-      sorry
+      calc
+      _ ≤ ((n : ℝ) + 1 + 1) * (u : ℝ) := by
+        apply mul_le_mul_of_nonneg_right
+        · simp only [le_add_iff_nonneg_right, zero_le_one]
+        · exact u.2
+      _ < _ := by simpa only [Nat.cast_add, Nat.cast_one] using hnu
     -- p: product, i.e. x0 * y0.
     -- s: sum of the rest
     obtain ⟨p, s, hp, hfl_vec_dot, hfl_add⟩ := hfl
-    have s_bound : diff_gamma_bound u (n + 1) (∑ i, x (Fin.succ i) * y (Fin.succ i)) s := ih hnu_n (fun i => x (Fin.succ i)) (fun i => y (Fin.succ i)) s hfl_vec_dot
-    have p_bound : diff_gamma_bound u 1 (x 0 * y 0) p := by
-      apply fl_to_gammma_bound u (x 0 * y 0) p
-      · sorry
-      · exact hp
-    have add_bound := fl_add_bound u 1 (n + 1) (x 0 * y 0) (∑ i, x (Fin.succ i) * y (Fin.succ i)) p s z hfl_add hnu p_bound s_bound
+    have s_bound : diff_gamma_bound u (n + 1) (∑ i, x (Fin.succ i) * x (Fin.succ i)) s := ih hnu_n (fun i => x (Fin.succ i)) s hfl_vec_dot
+    have p_bound : diff_gamma_bound u 1 (x 0 * x 0) p := by
+      exact fl_to_gammma_bound u (x 0 * x 0) p hu hp
+    have sum_nonneg : (∑ i, x (Fin.succ i) * x (Fin.succ i)) ≥ 0 := by sorry
+    have add_bound := fl_add_bound u 1 (n + 1) (x 0 * x 0) (∑ i, x (Fin.succ i) * x (Fin.succ i)) p s z (mul_self_nonneg _) sum_nonneg hfl_add hnu p_bound s_bound
     simp only [le_add_iff_nonneg_left, zero_le, sup_of_le_right] at add_bound
     simpa [dotProduct, Fin.sum_univ_succ, add_comm] using add_bound
 

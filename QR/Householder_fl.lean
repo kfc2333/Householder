@@ -32,6 +32,7 @@ def fl_householder (n : ℕ) (x : Vec n) (hn : n ≠ 0) (hv_fl : Householder n h
   -- (6) b = fl(√β)
   fl u (Real.sqrt hv_fl.β) hv_fl.b ∧
   -- (7) v = fl(b • v')
+  hv_fl.v' = (fun i => if i = ⟨0, Nat.pos_of_ne_zero hn⟩ then hv_fl.v0 else (x i)) ∧
   fl_smul_vec u hv_fl.b hv_fl.v' hv_fl.v
 
 theorem Lemma_19_1 (n : ℕ) (x : Vec n) (hn : n ≠ 0) (hx : x ≠ 0) (hv_fl : Householder n hn) (hnu : (100 * n + 101 : ℝ) * (u : ℝ) < 1) (hfl : fl_householder u n x hn hv_fl) :
@@ -43,7 +44,7 @@ theorem Lemma_19_1 (n : ℕ) (x : Vec n) (hn : n ≠ 0) (hx : x ≠ 0) (hv_fl : 
   unfold fl_householder at hfl
   have hv_back : householder n x hn = hv := rfl
   rw [hv_back]
-  rcases hfl with ⟨hfl_l', hfl_l, hfl_s, hfl_v0, hfl_p, hfl_β, hfl_b, hfl_v⟩
+  rcases hfl with ⟨hfl_l', hfl_l, hfl_s, hfl_v0, hfl_p, hfl_β, hfl_b, hfl_v', hfl_v⟩
   have l'_bound : diff_gamma_bound u (n + 1) hv.l' hv_fl.l' := by
     exact fl_vec_dot_bound u n (by linarith [hnu]) x x hv_fl.l' hfl_l'
   have l_bound : diff_gamma_bound u (n + 2) hv.l hv_fl.l := by
