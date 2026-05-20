@@ -1,1 +1,8 @@
 /.lake
+main.aux
+main.fdb_latexmk
+main.fls
+main.log
+main.synctex.gz
+main.xdv
+main.toc

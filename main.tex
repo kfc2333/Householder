@@ -1,0 +1,166 @@
+\documentclass[UTF8,a4paper]{ctexbook}
+\usepackage{indentfirst}
+
+% 页面边距
+\usepackage[a4paper,left=2cm,right=2cm,top=2.5cm,bottom=2.5cm,headsep=0.98cm,footskip=1.75cm]{geometry}
+
+% 行距
+\usepackage{setspace}
+\setstretch{1.25}
+
+% 英文数字字体
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+
+% 标题格式
+\usepackage{titlesec}
+
+% 页眉页脚
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{}
+\fancyfoot[C]{\heiti\zihao{5}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancypagestyle{plain}{%
+	\fancyhf{}
+	\fancyhead[C]{}
+	\fancyfoot[C]{\heiti\zihao{5}\thepage}
+	\renewcommand{\headrulewidth}{0.4pt}
+	\renewcommand{\footrulewidth}{0pt}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 一级标题（章）
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\titleformat{\chapter}
+{\centering\heiti\zihao{3}} % 三号黑体居中
+{第\chinese{chapter}章}
+{1em}
+{}
+
+\titlespacing*{\chapter}
+{0pt}{0.5em}{0.5em}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 二级标题（节）
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\titleformat{\section}
+{\songti\zihao{3}} % 三号宋体
+{\thesection}
+{1em}
+{}
+
+\titlespacing*{\section}
+{0pt}{0.25em}{0.25em}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 三级标题（小节）
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\titleformat{\subsection}
+{\songti\zihao{4}} % 四号宋体
+{\thesubsection}
+{0em}
+{}
+
+% 缩进两个字符
+\titlespacing*{\subsection}
+{2em}{0.25em}{0.25em}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 正文格式
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% 小四
+\renewcommand\normalsize{\zihao{-4}}
+
+% 首行缩进两个字符
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 目录格式
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{tocloft}
+
+% 目录标题
+\renewcommand{\contentsname}{目\quad 录}
+\renewcommand{\cfttoctitlefont}{\hfill\heiti\zihao{-2}}
+\renewcommand{\cftaftertoctitle}{\hfill}
+\renewcommand{\cftdotsep}{1}
+
+% 章目录格式
+\renewcommand{\cftchapfont}{\heiti}
+\renewcommand{\cftchappagefont}{\heiti}
+\renewcommand{\cftchapleader}{\cftdotfill{\cftdotsep}}
+
+% 节目录格式
+\renewcommand{\cftsecfont}{\songti}
+\renewcommand{\cftsecpagefont}{\songti}
+
+% 小节目录格式
+\renewcommand{\cftsubsecfont}{\songti}
+\renewcommand{\cftsubsecpagefont}{\songti}
+
+% 缩进
+\cftsetindents{chapter}{0em}{0pt}
+\cftsetindents{section}{1em}{0pt}
+\cftsetindents{subsection}{2em}{0pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 正文
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\pagenumbering{gobble}
+\tableofcontents
+
+\mainmatter
+
+\chapter{引言}
+
+这是正文内容。这是正文内容。这是正文内容。
+
+\section{研究背景}
+
+数值线性代数是科学计算的重要基础，在机器学习、计算机图形学、信号处理、工程仿真以及高性能计算等领域具有广泛应用。其中，QR分解作为数值线性代数中的核心工具，为线性方程组求解、最小二乘问题、特征值计算等任务提供了统一而高效的计算框架。
+
+Householder 变换是实现 QR 分解的重要方法。与经典 Gram-Schmidt 正交化相比，Householder 方法能够有效减小浮点舍入误差带来的影响，因此在实际计算中被广泛采用。其核心思想是通过构造正交反射矩阵，将向量逐步变换为目标方向，从而实现矩阵的正交化过程。由于 Householder 方法涉及大量浮点运算，其数值稳定性分析一直是数值分析领域的重要研究内容。
+
+传统数值分析通常通过数学推导对算法误差进行估计，并在一定假设条件下证明算法的稳定性。然而，这类证明往往包含复杂的符号推演与多层次误差传播分析，人工验证过程容易出现疏漏。因此，如何利用形式化方法对数值算法进行机器可验证的严格证明，逐渐成为形式化数学与可信计算研究中的重要方向。
+
+近年来，定理证明辅助系统的发展为数学证明的形式化提供了有效工具。其中，Lean 作为一种基于依赖类型理论的交互式定理证明系统，兼具较强的表达能力与较高的自动化水平，已被广泛应用于数学定理验证、程序正确性证明以及形式化数学库构建等领域。通过 Lean 对数值算法的稳定性结论进行形式化，不仅能够提高证明过程的可靠性，也有助于推动可信科学计算的发展。
+
+\section{研究内容}
+
+这是研究内容。
+
+\chapter{理论基础}
+
+\section{Householder矩阵}
+
+\subsection{定义与性质}
+
+这是定义与性质。
+
+\subsection{Householder变换}
+
+这是Householder变换。
+
+\section{QR分解}
+
+\subsection{定义}
+
+这是QR分解定义。
+
+\chapter{结论}
+
+这是结论。
+
+\end{document}
