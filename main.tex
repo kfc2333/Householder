@@ -1,5 +1,9 @@
-\documentclass[UTF8,a4paper]{ctexbook}
+\documentclass[UTF8,a4paper,openany]{ctexbook}
+\usepackage{pdfpages}
 \usepackage{indentfirst}
+\usepackage[hidelinks]{hyperref}
+\usepackage{amssymb}
+\usepackage{amsmath}
 
 % 页面边距
 \usepackage[a4paper,left=2cm,right=2cm,top=2.5cm,bottom=2.5cm,headsep=0.98cm,footskip=1.75cm]{geometry}
@@ -38,7 +42,7 @@
 \titleformat{\chapter}
 {\centering\heiti\zihao{3}} % 三号黑体居中
 {第\chinese{chapter}章}
-{1em}
+{0.5em}
 {}
 
 \titlespacing*{\chapter}
@@ -51,7 +55,7 @@
 \titleformat{\section}
 {\songti\zihao{3}} % 三号宋体
 {\thesection}
-{1em}
+{0.5em}
 {}
 
 \titlespacing*{\section}
@@ -64,7 +68,7 @@
 \titleformat{\subsection}
 {\songti\zihao{4}} % 四号宋体
 {\thesubsection}
-{0em}
+{0.5em}
 {}
 
 % 缩进两个字符
@@ -119,9 +123,11 @@
 \begin{document}
 
 \pagenumbering{gobble}
+\includepdf[pages=-]{header.pdf}
 \tableofcontents
 
-\mainmatter
+\clearpage
+\pagenumbering{arabic}
 
 \chapter{引言}
 
@@ -139,15 +145,27 @@ Householder 变换是实现 QR 分解的重要方法。与经典 Gram-Schmidt �
 
 \section{研究内容}
 
-这是研究内容。
+本文围绕 Householder 变换的数值稳定性问题展开研究，并基于 Lean 定理证明系统对相关结论进行形式化验证。研究的核心问题是：在浮点误差模型下，Householder 变换中关键向量的计算结果是否能够保持足够小的相对误差，以及如何以形式化方式严格证明该性质。
+
+为此，本文首先对 Householder 变换的数学定义及其稳定性理论进行了分析，并建立相应的浮点误差模型。在此基础上，使用 Lean 对相关数学对象、误差界以及稳定性定理进行形式化表示与证明。本文进一步给出了误差界中的具体常数，从而使稳定性结论具有更明确的量化形式。这表明形式化方法不仅能够验证已有理论结果，还能够帮助将传统证明中被省略的步骤补全。
 
 \chapter{理论基础}
 
+本章与下一章中都将使用参考证明的源文献\textit{Accuracy and Stability of Numerical Algorithms}中的记号。
+
 \section{Householder矩阵}
+
+Householder矩阵是数值线性代数中一种重要的正交变换工具，广泛应用于QR分解等矩阵计算算法中。其核心作用是通过一种对称的“反射”变换，将向量或矩阵逐步转换为更便于计算的形式。相比Gram-Schmidt正交化等其他正交化方法，Householder法具有更好的数值稳定性，因此在现代科学计算软件与高性能数值计算中被广泛采用。
 
 \subsection{定义与性质}
 
-这是定义与性质。
+Householder矩阵（或称Householder变换矩阵）是具有如下形式的矩阵：
+$$P=I-\frac{2}{v^Tv}vv^T,\quad 0\neq v \in \mathbb{R}^n$$
+其对称性显然。又由
+\begin{align*}
+P^2&=I-\frac{4}{v^Tv}vv^T+\frac{4}{\left(v^Tv\right)^2}vv^Tvv^T\\&=I-\frac{4}{v^Tv}vv^T+\frac{4}{\left(v^Tv\right)^2}v\left(v^Tv\right)v^T=I
+\end{align*}
+结合其对称性可知其为正交矩阵。
 
 \subsection{Householder变换}
 
