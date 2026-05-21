@@ -3,7 +3,7 @@
         {
             "name": "lean",
             "tools": [
-                "leanxelatexmk"
+                "lean"
             ]
         },
     ],
