@@ -1,0 +1,27 @@
+{
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "lean",
+            "tools": [
+                "leanxelatexmk"
+            ]
+        },
+    ],
+    "latex-workshop.latex.tools": [
+        {
+            "name": "lean",
+            "command": "latexmk",
+            "args": [
+                "-shell-escape",
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "-xelatex",
+                "-outdir=%OUTDIR%",
+                "-auxdir=%AUXDIR%",
+                "%DOC%"
+            ],
+            "env": {}
+        },
+    ],
+}
