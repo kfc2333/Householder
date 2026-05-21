@@ -2,8 +2,31 @@
 \usepackage{pdfpages}
 \usepackage{indentfirst}
 \usepackage[hidelinks]{hyperref}
+% \usepackage[T1]{fontenc}
+% \usepackage[utf8]{inputenc}
+% \usepackage{listings}
 \usepackage{amssymb}
 \usepackage{amsmath}
+
+% \usepackage{color}
+% \definecolor{keywordcolor}{rgb}{0.7, 0.1, 0.1}   % red
+% \definecolor{tacticcolor}{rgb}{0.0, 0.1, 0.6}    % blue
+% \definecolor{commentcolor}{rgb}{0.4, 0.4, 0.4}   % grey
+% \definecolor{symbolcolor}{rgb}{0.0, 0.1, 0.6}    % blue
+% \definecolor{sortcolor}{rgb}{0.1, 0.5, 0.1}      % green
+% \definecolor{attributecolor}{rgb}{0.7, 0.1, 0.1} % red
+
+% \def\lstlanguagefiles{lstlean.tex}
+% % set default language
+% \lstset{language=lean}
+
+\usepackage{fontspec}
+% switch to a monospace font supporting more Unicode characters
+\setmonofont{FreeMono}
+\usepackage{minted}
+\newmintinline[lean]{lean4}{bgcolor=white}
+\newminted[leancode]{lean4}{fontsize=\footnotesize}
+\usemintedstyle{tango}  % a nice, colorful theme
 
 % 页面边距
 \usepackage[a4paper,left=2cm,right=2cm,top=2.5cm,bottom=2.5cm,headsep=0.98cm,footskip=1.75cm]{geometry}
@@ -251,6 +274,9 @@ $$fl(x\ op\ y)=(x\ op\ y)(1+\delta),\quad |\delta|\le u$$
 
 记$u$为上一章中提到的$u$，表示正在使用的浮点运算系统的精度。定义$$\gamma_n=\frac{nu}{1-nu}$$
 
+\begin{leancode}
+def γ (n : ℕ) : ℝ := (n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ))
+\end{leancode}
 
 \section{Householder过程}
 
