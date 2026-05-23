@@ -4,6 +4,7 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{amssymb}
 \usepackage{amsmath}
+\usepackage{amsthm}
 \DeclareMathOperator{\sign}{sign}
 
 \usepackage{fontspec}
@@ -32,6 +33,29 @@
 
 % 标题格式
 \usepackage{titlesec}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 定理环境
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newtheoremstyle{qrplain}
+{0.5\baselineskip}
+{0.5\baselineskip}
+{\bfseries}
+{}
+{\bfseries}
+{.}
+{0.5em}
+{}
+
+\theoremstyle{qrplain}
+\newtheorem{definition}{定义}[chapter]
+\newtheorem{theorem}[definition]{定理}
+\newtheorem{lemma}[definition]{引理}
+
+\renewenvironment{proof}[1][证明]
+{\par\noindent\textbf{#1.}\ \begingroup\bfseries}
+{\endgroup\hfill$\square$\par}
 
 % 页眉页脚
 \usepackage{fancyhdr}
@@ -263,7 +287,9 @@ $$fl(x\ op\ y)=(x\ op\ y)(1+\delta),\quad |\delta|\le u$$
 
 \section{记号}
 
-记$u$为上一章中提到的$u$，表示浮点计算模型精度：
+\begin{definition}
+	记$u$为上一章中提到的$u$，表示浮点计算模型精度：
+\end{definition}
 \begin{leancode}
 variable (u : NNReal)
 \end{leancode}
