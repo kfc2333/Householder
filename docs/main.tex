@@ -13,16 +13,16 @@
 \usepackage{xcolor}
 \usepackage{minted}
 \fvset{
-	vspace=0pt,
-	listparameters=\setlength{\topsep}{0pt}
-		\setlength{\partopsep}{0pt}
-		\setlength{\parsep}{0pt}
-		\setlength{\itemsep}{0pt}
+  vspace=0pt,
+  listparameters=\setlength{\topsep}{0pt}
+    \setlength{\partopsep}{0pt}
+    \setlength{\parsep}{0pt}
+    \setlength{\itemsep}{0pt}
 }
 \newmintinline[lean]{lean4}{bgcolor=white}
 \newminted[leancode]{lean4}{
-	bgcolor=gray!10,
-	fontsize=\normalsize,
+  bgcolor=gray!10,
+  fontsize=\normalsize,
 }
 \usemintedstyle{tango}  % a nice, colorful theme
 
@@ -48,7 +48,7 @@
 
 \newtheoremstyle{qrplain}
 {0.5\baselineskip}
-{0.5\baselineskip}
+{0.15\baselineskip}
 {\bfseries}
 {}
 {\qrthmchinese\bfseries}
@@ -73,11 +73,11 @@
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0pt}
 \fancypagestyle{plain}{%
-	\fancyhf{}
-	\fancyhead[C]{}
-	\fancyfoot[C]{\heiti\zihao{5}\thepage}
-	\renewcommand{\headrulewidth}{0.4pt}
-	\renewcommand{\footrulewidth}{0pt}
+  \fancyhf{}
+  \fancyhead[C]{}
+  \fancyfoot[C]{\heiti\zihao{5}\thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\footrulewidth}{0pt}
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -234,8 +234,8 @@ $$A=QR=\left[\begin{matrix}Q_1&Q_2\\\end{matrix}\right]\left[\begin{matrix}R_1\\
 \subsection{Householder矩阵在求解QR分解问题中的应用}
 下面以一$4\times3$矩阵为例，展示Householder法求解QR分解问题的过程。
 \begin{align*}
-	A=&\left[\begin{matrix}\times&\times&\times\\\times&\times&\times\\\times&\times&\times\\\times&\times&\times\\\end{matrix}\right]\xrightarrow{P_1}\left[\begin{matrix}\times&\times&\times\\0&\times&\times\\0&\times&\times\\0&\times&\times\\\end{matrix}\right]\xrightarrow{P_2}\\
-	&\left[\begin{matrix}\times&\times&\times\\0&\times&\times\\0&0&\times\\0&0&\times\\\end{matrix}\right]\xrightarrow{P_3}\left[\begin{matrix}\times&\times&\times\\0&\times&\times\\0&0&\times\\0&0&0\\\end{matrix}\right]=R
+  A=&\left[\begin{matrix}\times&\times&\times\\\times&\times&\times\\\times&\times&\times\\\times&\times&\times\\\end{matrix}\right]\xrightarrow{P_1}\left[\begin{matrix}\times&\times&\times\\0&\times&\times\\0&\times&\times\\0&\times&\times\\\end{matrix}\right]\xrightarrow{P_2}\\
+  &\left[\begin{matrix}\times&\times&\times\\0&\times&\times\\0&0&\times\\0&0&\times\\\end{matrix}\right]\xrightarrow{P_3}\left[\begin{matrix}\times&\times&\times\\0&\times&\times\\0&0&\times\\0&0&0\\\end{matrix}\right]=R
 \end{align*}
 
 一般地，我们考虑以下递归过程。记$A_1=A$。对递归的第$k$步，设我们面对如下矩阵：
@@ -295,7 +295,7 @@ $$fl(x\ op\ y)=(x\ op\ y)(1+\delta),\quad |\delta|\le u$$
 \section{记号}
 
 \begin{definition}
-	浮点计算精度u
+  浮点计算精度u
 \end{definition}
 \begin{leancode}
 variable (u : NNReal)
@@ -303,7 +303,7 @@ variable (u : NNReal)
 浮点误差模型部分和上一章中定义相同，不再赘述。
 
 \begin{definition}
-	记$\gamma_n=nu/(1-nu)$
+  记$\gamma_n=nu/(1-nu)$
 \end{definition}
 \begin{leancode}
 def γ (n : ℕ) : ℝ := (n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ))
@@ -315,7 +315,7 @@ $$|\theta_n|\le\gamma_n,\quad\theta_n\in\mathbb{R}$$
 表示该运算序列中可能引入的误差。下文所有$\theta$默认满足此条件。
 
 \begin{definition}
-	符号函数
+  符号函数
 \end{definition}
 我们规定
 $$
@@ -333,9 +333,9 @@ $$
 \section{Householder过程}
 
 \begin{definition}
-	Householder算法
+  Householder算法
 \end{definition}
-对$x\in\mathbb{R}^n,\ x\neq0$，我们使用如下的Householder算法来取得满足$\left(I-vv^T\right)x=-\left(\sign x_1\right)||x||_2e_1$的v：
+$\forall x\in\mathbb{R}^n,\ x\neq0$，使用如下的Householder算法来求解$\left(I-vv^T\right)x=-\left(\sign x_1\right)||x||_2e_1$：
 $$
 \left\{
 \begin{array}{l}
@@ -350,6 +350,35 @@ b = \sqrt{\beta}
 \end{array}
 \right.
 $$
+\begin{leancode}
+structure Householder (n : ℕ) (hn : n ≠ 0) where
+  l' : ℝ
+  l : ℝ
+  s : ℝ
+  v0 : ℝ
+  v' : Vec n
+  p : ℝ
+  β : ℝ
+  b : ℝ
+  v : Vec n
+
+def householder (n : ℕ) (x : Vec n) (hn : n ≠ 0) :
+  Householder n hn :=
+by
+  let i₀ : Fin n := ⟨0, Nat.pos_of_ne_zero hn⟩
+  let l' := x ⬝ᵥ x
+  let l := Real.sqrt l'
+  let s := sign x hn * l
+  let v0 := x i₀ + s
+  let p := s * v0
+  let β := 1 / p
+  let b := Real.sqrt β
+  let v' : Vec n := fun i => if i = i₀ then v0 else x i
+  let v := b • v'
+  exact {l' := l', l := l, s := s, v0 := v0,
+    v' := v', p := p, β := β, b := b, v := v
+  }
+\end{leancode}
 
 % 把这段写成更正式的证明
 注意到进行到$v_1=x_1+s$一步结束时，$v=x-(-\left(\sign x_1\right)||x||_2e_1)$。由2.1.2节可知，此时有$P=I-\frac{2}{v^Tv}vv^T$是一个解。
