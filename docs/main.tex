@@ -12,11 +12,17 @@
 \setmonofont{FreeMono}
 \usepackage{xcolor}
 \usepackage{minted}
+\fvset{
+	vspace=0pt,
+	listparameters=\setlength{\topsep}{0pt}
+		\setlength{\partopsep}{0pt}
+		\setlength{\parsep}{0pt}
+		\setlength{\itemsep}{0pt}
+}
 \newmintinline[lean]{lean4}{bgcolor=white}
 \newminted[leancode]{lean4}{
 	bgcolor=gray!10,
 	fontsize=\normalsize,
-	framesep=0pt,
 }
 \usemintedstyle{tango}  % a nice, colorful theme
 
@@ -320,13 +326,16 @@ $$
 \end{cases}
 $$
 
-注意这个sign的定义与通常的sign在$0$处定义不同。这个函数旨在防止在$x_1=1$时发生退化导致除$0$。
+注意这个sign的定义与通常的sign在$0$处定义不同。这个函数只是旨在防止在$x_1=1$时发生退化导致除$0$。
 
 对于计算过程中的任意中间值$a$，我们记$a$为其在精确计算时得到的结果，$\hat{a}$为其在有浮点误差的环境中计算得到的结果。
 
 \section{Householder过程}
 
-对$x\in\mathbb{R}^n,\quad x\neq0$，我们使用如下的Householder算法来取得满足$\left(I-vv^T\right)x=-\left(\sign x_1\right)||x||_2e_1$的v：
+\begin{definition}
+	Householder算法
+\end{definition}
+对$x\in\mathbb{R}^n,\ x\neq0$，我们使用如下的Householder算法来取得满足$\left(I-vv^T\right)x=-\left(\sign x_1\right)||x||_2e_1$的v：
 $$
 \left\{
 \begin{array}{l}
