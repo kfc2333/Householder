@@ -31,6 +31,8 @@
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
 
+\newCJKfontfamily\qrthmchinese{SimHei}[AutoFakeBold=2]
+
 % 标题格式
 \usepackage{titlesec}
 
@@ -43,7 +45,7 @@
 {0.5\baselineskip}
 {\bfseries}
 {}
-{\bfseries}
+{\qrthmchinese\bfseries}
 {.}
 {0.5em}
 {}
@@ -51,10 +53,9 @@
 \theoremstyle{qrplain}
 \newtheorem{definition}{定义}[chapter]
 \newtheorem{theorem}[definition]{定理}
-\newtheorem{lemma}[definition]{引理}
-
+{}
 \renewenvironment{proof}[1][证明]
-{\par\noindent\textbf{#1.}\ \begingroup\bfseries}
+{\qrthmchinese\bfseries}
 {\endgroup\hfill$\square$\par}
 
 % 页眉页脚
@@ -275,7 +276,7 @@ $$2^5\times1.001111\approx2^5\times1.0100=40$$
 设$x,\ y\in\mathbb{R}$，记$op\in\{+,-,\times,/\}$为基本浮点运算。本文采用如下经典浮点误差模型描述一次浮点运算的结果：
 $$fl(x\ op\ y)=(x\ op\ y)(1+\delta),\quad |\delta|\le u$$
 
-其中u是一个仅与浮点数存储系统有关的小正数。
+其中$u$是一个仅与浮点数存储系统有关的小正数。
 
 注意到有一部分操作一定不会导致舍入误差，例如取相反数，或者与0相加等等。在后面的证明中会用到这一性质。
 
@@ -288,23 +289,28 @@ $$fl(x\ op\ y)=(x\ op\ y)(1+\delta),\quad |\delta|\le u$$
 \section{记号}
 
 \begin{definition}
-	记$u$为上一章中提到的$u$，表示浮点计算模型精度：
+	浮点计算精度u
 \end{definition}
 \begin{leancode}
 variable (u : NNReal)
 \end{leancode}
+浮点误差模型部分和上一章中定义相同，不再赘述。
 
-定义$$\gamma_n=\frac{nu}{1-nu}$$
+\begin{definition}
+	记$\gamma_n=nu/(1-nu)$
+\end{definition}
 \begin{leancode}
 def γ (n : ℕ) : ℝ := (n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ))
 \end{leancode}
-
-为n次浮点舍入后计算结果与正确结果的相对误差。书中为避免对常数的讨论，还定义了$\widetilde{\gamma_n}=\gamma_{cn}$。本文由于在所有需要使用这个参数的地方都已经将常数显式计算出来，因此不再使用此参数。
+为n次浮点舍入后计算结果与正确结果的相对误差。书中为避免对常数的讨论，还定义了$\widetilde{\gamma_n}=\gamma_{cn}$。本文由于在所有需要使用这个参数的地方都已经将常数$c$显式计算出来，因此不再使用此参数。
 
 对于某个特定的运算序列，我们用
 $$|\theta_n|\le\gamma_n,\quad\theta_n\in\mathbb{R}$$
 表示该运算序列中可能引入的误差。下文所有$\theta$默认满足此条件。
 
+\begin{definition}
+	符号函数
+\end{definition}
 我们规定
 $$
 \sign(x)=
