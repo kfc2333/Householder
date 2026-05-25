@@ -338,7 +338,7 @@ $$
 
 \section{基础浮点运算的误差估计}
 
-本节我们将跟随Basic.lean中的顺序，给出一些浮点运算中误差估计的基础结果，并证明一些在证明中会用到的引理。
+本节将遵循源文件\textsf{Basic.lean}中的逻辑顺序，给出一系列浮点算术误差估计的基础结论，并证明后续推导所需的相关引理。
 
 \begin{theorem}
 \label{thm:gamma-mul-le}
@@ -349,11 +349,11 @@ lemma gamma_mul_le (n₁ n₂ : ℕ)
   (hnu : ((n₁ + n₂) : ℝ) * (u : ℝ) < 1) :
     (γ u n₁ + 1) * (γ u n₂ + 1) ≤ γ u (n₁ + n₂) + 1
 \end{leancode}
-即$n_1$次和$n_2$次的误差叠加后不超过$n_1+n_2$次的误差。
+即$n_1$阶和$n_2$阶的误差相叠加后，总误差不超过$n_1+n_2$阶。
 \begin{proof}
-  展开定义可知结果等价于
+  展开定义可知，该命题等价于证明
   $$\frac{1}{1-un_1}\cdot\frac{1}{1-un_2} \le \frac{1}{1-u(n_1+n_2)}$$
-  当分母都为正时成立。
+  由前提条件易知各分式分母均为正数，故该不等式成立。
 \end{proof}
 
 \begin{definition}
@@ -365,7 +365,7 @@ def diff_gamma_bound (n : ℕ) (x x' : ℝ) : Prop :=
 def diff_gamma_bound_theta (n : ℕ) (x x' : ℝ) : Prop :=
   ∃ θ : ℝ, x' = x * (1 + θ) ∧ |θ| ≤ γ u n
 \end{leancode}
-为了定量的控制误差的阶数，我们定义两个等价的误差类表示$x'$在$x$的$\gamma_n$误差界内。第一个定义直接给出了误差界的定义。第二个定义则使用存在论断给出相同命题，在需要对误差做复杂计算时更方便。两个定义显然是等价的。
+为定量控制运算误差的阶数，此处定义了两个逻辑等价的判别谓词，用于描述计算结果$x'$落在真实值$x$的$\gamma_n$误差界内。第一个定义采用了绝对误差上限的形式。第二个定义是引入了中间变量$\theta$的等价形式，这种存在性论断在处理复杂的复合误差推导时更为简便。
 
 \begin{lemma}
   误差的保号性
@@ -376,7 +376,7 @@ lemma pos_diff_gamma_bound_pos (n : ℕ) (x x' : ℝ)
   (hbound : diff_gamma_bound u n x x') :
     x' > 0 
 \end{leancode}
-$\gamma_n<1$时浮点误差不会导致计算结果的正负号改变。
+该命题表明，当浮点计算的相对误差界满足$\gamma_n<1$时，舍入累积带来的误差不足以改变真实计算结果的正负号。
 
 \begin{theorem}
   误差的传递性
@@ -388,9 +388,9 @@ theorem diff_gamma_bound_trans (n₁ n₂ : ℕ) (x x' x'' : ℝ)
   (hbound₂ : diff_gamma_bound u n₂ x' x'') :
     diff_gamma_bound u (n₁ + n₂) x x'' 
 \end{leancode}
-定理~\ref{thm:gamma-mul-le}的应用。若$x$经历了一次$n_1$阶误差界的计算得到$x'$，又经历了一次$n_2$阶误差界的计算得到$x''$，则$x''$在$x$的$n_1+n_2$阶误差界内。
+该定理为定理~\ref{thm:gamma-mul-le}的应用。若真实值$x$经由一次运算得到具有$n_1$阶误差界的近似值$x'$，该近似值再经由一次具有$n_2$阶误差界的运算得到结果$x''$，则$x''$相对于真实值$x$的总误差域在$n_1+n_2$阶内。
 
-误差阶数满足可加性，从而可以推出在复合运算下误差界的传递性。
+这说明误差阶数满足可加性，并保证了在复合运算中误差界的传递性。
 
 \begin{theorem}
 \label{thm:add-bound-nonneg}
@@ -405,7 +405,7 @@ lemma add_bound_nonneg
   (hboundy : diff_gamma_bound u ny y y') :
     diff_gamma_bound u (nx ⊔ ny) (x + y) (x' + y')
 \end{leancode}
-当$x, y\ge 0$时，若$x'=(1+\theta_{n_x})x,\ y'=(1+\theta_{n_y})y$，那么$x'+y'$被$x+y$在$x', y'$中误差阶数较高的阶数控制。
+已知参数$x, y\ge 0$，在$x'=(1+\theta_{n_x})x$及$y'=(1+\theta_{n_y})y$成立的前提下，加法运算结果$x'+y'$的总误差上限将由两运算数误差阶数$n_x, n_y$中较高的者所控制。
 \begin{proof}
   由定义可知
   \begin{align*}
@@ -415,7 +415,7 @@ lemma add_bound_nonneg
     &= \gamma_{\max{nx, ny}}|x + y|
   \end{align*}
 \end{proof}
-最后一步中用到了$x, y$同号的性质。在Lean代码中将其分成了两种情况。
+需要说明的是，上述推导环节中最后一个等式的成立依赖于变量$x, y$同号。在Lean中，将此结论分为了非负和非正两个版本。
 
 \begin{theorem}
 \label{thm:mul-bound}
@@ -429,7 +429,7 @@ lemma mul_bound
   (hboundy : diff_gamma_bound u ny y y') :
     diff_gamma_bound u (nx + ny) (x * y) (x' * y')
 \end{leancode}
-若$x'=(1+\theta_{n_x})x,\ y'=(1+\theta_{n_y})y$，那么$x'y'$被$xy$在$n_x+n_y$阶误差界内控制。
+对于乘法运算，若$x'=(1+\theta_{n_x})x$且$y'=(1+\theta_{n_y})y$，则乘积项$x'y'$的复合误差最终受到真实值$xy$的$n_x+n_y$阶误差界约束。
 \begin{proof}
   由定义可知
   \begin{align*}
@@ -448,7 +448,7 @@ lemma mul_bound
 def fl (x x' : ℝ) : Prop :=
   ∃ δ : ℝ, |δ| ≤ (u : ℝ) ∧ x * (1 + δ) = x'
 \end{leancode}
-对于一次基本的浮点运算，我们定义其结果$x'$与正确结果$x$之间的关系为存在一个$\delta$使得$x' = x(1+\delta)$且$|\delta|\le u$。也即误差的相对比值被$u$控制。
+对于单次基本的浮点运算，其计算结果$x'$与真实结果$x$之间的关系定义为：存在误差参数$\delta$使得$x' = x(1+\delta)$且$|\delta|\le u$。这表明计算结果的相对偏差受到机器精度$u$的控制。
 
 \begin{lemma}
   浮点误差界与$\gamma$误差界的关系
@@ -457,7 +457,7 @@ def fl (x x' : ℝ) : Prop :=
 lemma fl_to_gamma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
   fl u x x' → diff_gamma_bound u 1 x x'
 \end{leancode}
-显然由于$u>\gamma_1$，一次基本的浮点运算的误差界被$\gamma_1$控制。
+易知由于前提满足$\gamma_1 > u$，单次基本浮点运算产生的误差可直接被$\gamma_1$误差界控制。
 
 \begin{definition}
   向量的浮点误差界
@@ -466,7 +466,7 @@ lemma fl_to_gamma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
 def diff_gamma_bound_vec (n : ℕ) {m : ℕ} (x : Vec m) (x' : Vec m) : 
   Prop := ∀ i, diff_gamma_bound u n (x i) (x' i)
 \end{leancode}
-向量误差在$n$阶界内，等价于每一个分量的误差都在$n$阶界内。
+该定义表明，向量整体落在$n$阶误差界内等价于其内部每一个分量的误差均受到$n$阶误差界的限制。
 
 \begin{definition}
   基础运算的浮点误差界
@@ -480,7 +480,7 @@ def fl_smul_vec (a : ℝ)
   (x : Vec n) (y : Vec n) : Prop :=
     ∀ i, fl u (a * x i) (y i)
 \end{leancode}
-定义了会用到的加法，乘法及向量数乘三种运算。定义即为运算结果在一次浮点误差界以内。
+上述代码分别定义了加法、乘法及向量数乘运算的浮点实现。其核心条件为每一次运算的操作结果均被约束在真实结果的精度$u$的单次浮点误差界以内。
 
 \begin{definition}
   带误差的向量点乘
@@ -496,9 +496,9 @@ def fl_vec_dot : {n : ℕ} → Vec n → Vec n → ℝ → Prop
       (fun i => y (Fin.succ i)) s ∧
       fl_add u p s z
 \end{leancode}
-定义了带误差的向量点乘。我们递归地定义这个过程。当$n=0$时，点乘结果为$0$。当$n>0$时，我们先计算一个分量的乘积$p$，再递归计算剩余分量的点乘结果$s$，最后将两者相加得到最终结果$z$。每一步运算都满足一次浮点误差界。
+定义了带误差的向量点乘。我们递归地定义这个过程：当$n=0$时，点乘结果为$0$；当$n>0$时，先计算一个分量的乘积$p$，再递归计算剩余分量的点乘结果$s$，最后将两者相加得到最终结果$z$。每一步运算均满足一次浮点误差界。
 
-注意这里相比于真实场景中的向量内积，额外引入了$n=1$时一次没有必要的$x_1y_1+0$运算，并且没有额外规定这次运算的误差为$0$。这会导致给出的内积运算的界从$n$阶变为$n+1$阶，对得到的结论影响不大，并且可以简化证明。
+需要注意的是，为了简化形式化证明的结构，上述定义在$n=1$时包含了额外的计算$x_1y_1+0$，且未假设该次加法的误差为零。这使得向量内积误差的上界由理论上的$n$阶放宽至$n+1$阶，但该放宽对整体结论的影响较小。
 
 \begin{theorem}
 \label{thm:fl-vec-dot-bound}
@@ -512,9 +512,9 @@ theorem fl_vec_dot_bound
   (hfl : fl_vec_dot u x x z) :
     diff_gamma_bound u (n + 1) (x ⬝ x) z 
 \end{leancode}
-向量内积自身的计算结果在$n+1$阶误差界内。与原书中第3.1章得到的结论不同，我们将条件修改为向量与自身内积（在下面的证明中也只需要用到这种内积），而不是任意的两个向量点乘。从而我们可以得到更强的、直接关于计算得数的误差界。
+该定理表明，向量与其自身内积的计算结果满足$n+1$阶误差界。与参考文献第3.1节中关于一般向量内积的普遍结论不同，形式化证明中仅需处理向量与自身的内积。这一条件避免了绝对值不等式的放缩，从而可以直接获得针对计算结果的误差界。
 \begin{proof}
-  记$s_i=x_1x_1+\cdots+x_ix_i$。我们有
+  记$s_i=\sum_{k=1}^i x_kx_k$，由浮点运算定义得：
   \begin{align*}
     \widehat{s_1}&=fl(0+fl(x_1x_1))\\
     &=fl(x_1x_1)(1+\theta_1)\\
@@ -526,7 +526,7 @@ theorem fl_vec_dot_bound
     &=s_i(1+\theta_{i+1})
   \end{align*}
   
-  即得$\widehat{s_n}=s_n(1+\theta_{n+1})$。
+  由此可推得$\widehat{s_n}=s_n(1+\theta_{n+1})$。
 \end{proof}
 
 \begin{lemma}
@@ -539,7 +539,7 @@ lemma sqrt_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x ≥ 0)
   (h_bound : diff_gamma_bound u n x x') :
     diff_gamma_bound u n (Real.sqrt x) (Real.sqrt x') 
 \end{leancode}
-若$x'=x(1+\theta_n)$且$x\ge 0$，则$\sqrt{x'}$仍然被$\sqrt{x}$在$n$阶误差界内控制。这里其实可以放成$n/2$阶，但为了简化证明我们直接放成$n$阶。
+对于非负实数$x$，若其计算值$x'$满足$n$阶误差界约束（即$x'=x(1+\theta_n)$），则开方结果$\sqrt{x'}$仍满足关于$\sqrt{x}$的$n$阶误差界。为保持公式一致性并简化形式化证明框架，此处未将理论上界缩紧至$n/2$阶，而是继续使用$n$阶作为上界。
 
 \begin{lemma}
 \label{lem:inv-bound}
@@ -551,9 +551,9 @@ lemma div_inv_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x > 0)
   (h_bound : diff_gamma_bound u n x x') :
     diff_gamma_bound u (2 * n) (1 / x) (1 / x') 
 \end{leancode}
-若$x'=x(1+\theta_n)$且$x>0$，则$1/x'$被$1/x$在$2n$阶误差界内控制。
+对于正实数$x$，若计算值$x'$满足$n$阶误差界，则其倒数$1/x'$满足关于$1/x$的$2n$阶误差界。
 
-原书中基于$u$很小的假设，直接得出了$1/(1+\theta_n)=1+\theta_n$。在更严格的Lean中，我们无法保证$1/(1-\gamma_n)\le 1+\gamma_n$。因此我们被迫把界放宽到$2n$阶。
+在经典数值分析中，通常在假定精度$u$足够小的前提下使用近似等式$1/(1+\theta_n)\approx 1-\theta_n$，得出误差不扩大的结论。但在严谨的逻辑下，$1/(1-\gamma_n)\le 1+\gamma_n$并不恒成立。因此为了保证定理的绝对严谨，我们需将倒数运算引起的误差控制范围放宽至$2n$阶。
 \begin{proof}
   只需证明
   $$
@@ -603,14 +603,14 @@ lemma div_inv_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x > 0)
   \end{align*}
 \end{proof}
 
-以上为Basic.lean中证明的和定义的全部重要内容。我们在后续的证明中会使用这些结果。
+以上内容涵盖了源文件\textsf{Basic.lean}中关于浮点运算误差的基础定义与核心证明，这些结论将作为工具在后续核心算法误差的推导中被反复应用。
 
 \section{Householder过程}
 
 \begin{definition}
   Householder算法
 \end{definition}
-$\forall x\in\mathbb{R}^n,\ x\neq0$，使用如下的Householder算法来求解$\left(I-vv^T\right)x=-\left(\sign x_1\right)||x||_2e_1$：
+对于任意非零向量$x\in\mathbb{R}^n$，可通过下列Householder算法步骤计算向量$v$，以构造适当的变换使得$\left(I-vv^T\right)x=-\left(\sign x_1\right)\|x\|_2e_1$成立：
 $$
 \left\{
 \begin{array}{l}
@@ -703,7 +703,7 @@ $$
 因此最后一步中的缩放因子$b$将向量归一化，使Householder矩阵从标准形式$I-\frac{2}{v'^Tv'}v'v'^T$化为计算上更为简洁的$I-vv^T$。
 \end{proof}
 
-以上的证明过程中引用了前序的结论，然而在Lean中我们需要单独证明。详细的证明过程可以查看代码库中的Householder.lean。
+以上的证明过程中引用了前序的结论。但在Lean形式化系统中，部分隐式定理需被拆解为更基本的命题进行逐级证明。完整的形式化实现在代码库的\textsf{Householder.lean}内。
 
 \section{Householder法的误差估计}
 
@@ -732,10 +732,10 @@ def fl_householder (n : ℕ) (x : Vec n) (hn : n ≠ 0)
                           else (x i)) ∧
     fl_smul_vec u hv_fl.b hv_fl.v' hv_fl.v
 \end{leancode}
-我们将带误差的Householder过程定义为若干个变量之间的链式关系，每个变量都和之前的变量满足某个浮点误差约束。我们将证明每传递一段，误差阶数都会增加一些，最终得到结果的误差阶数。
+上述代码以相继传递的中间变量形式，构建了考虑浮点误差扰动的Householder计算序列模型。在此链式结构中，每层衍生变量均须满足基于其直接前驱量的单次运算浮点误差。接下来的证明中，将逐层追踪误差在公式链中的放大特征，最终界定总体输出误差。
 
 \begin{theorem}
-  Householder算法误差的界（即参考文献中的引理19.1）
+  Householder算法误差的界（对应参考文献中的引理19.1）
 \end{theorem}
 \begin{leancode}
 theorem Lemma_19_1 (n : ℕ) (x : Vec n) 
@@ -746,55 +746,55 @@ theorem Lemma_19_1 (n : ℕ) (x : Vec n)
     diff_gamma_bound_vec u (5 * n + 18)
     (householder n x hn).v hv_fl.v
 \end{leancode}
-即$\forall 1\le i\le n,\ \exists\delta_i,\ |\delta_i|\le\gamma_{5n+18},\ \hat{v_i}=v_i(1+\theta_i)$。 
+该引理证明了对于输出向量各分量均存在$\theta_i$满足：在误差界$|\theta_i|\le\gamma_{5n+18}$条件下取得$\hat{v_i}=v_i(1+\theta_i)$（$1\le i\le n$）。 
 
 \begin{proof}
-我们从前向后，逐个证明计算每个变量的误差的界。首先我们假设精确的Householder过程为hv：
+此处按计算顺序分步证明各步的具体累积误差界。作为参照基础，先行实例化不含浮点波动的精确过程变量结构\textsf{hv}：
 \begin{leancode}
   let hv := householder n x hn
 \end{leancode}
 
-直接应用$l'$的定义和定理~\ref{thm:fl-vec-dot-bound}，我们有
+基于$l'$的定义与定理~\ref{thm:fl-vec-dot-bound}，得到：
 \begin{leancode}
 have l'_bound : diff_gamma_bound u (n + 1) hv.l' hv_fl.l'
 \end{leancode}
 
-由引理~\ref{lem:sqrt-bound}，上面的界可以传递到$\sqrt{\hat{l'}}$。再考虑一次开根运算引入的误差，我们有：
+由引理~\ref{lem:sqrt-bound}，开方运算不放大输入误差的上界。叠加本次浮点开方运算引入的一次误差，得到变量$l$的误差界：
 \begin{leancode}
 have l_bound : diff_gamma_bound u (n + 2) hv.l hv_fl.l
 \end{leancode}
 
-乘$1$或$-1$不会引入误差，因此$s$的界与$l$相同：
+由于符号函数取值仅为$1$或$-1$，不引入额外浮点误差，因此$s$的误差界与$l$相同：
 \begin{leancode}
 have s_bound : diff_gamma_bound u (n + 2) hv.s hv_fl.s
 \end{leancode}
 
-由$s$的定义，我们知道$s$与$x_1$同时非负或非正。因此由引理~\ref{thm:add-bound-nonneg}以及它的非正版本，上面的界可以传递到$\hat{x_1}+\hat{s}$。再考虑一次加法引入的误差，我们有：
+由$s$的定义可知，$s$与$x_1$同号。依据定理~\ref{thm:add-bound-nonneg}，同号相加的误差界由操作数的最大误差界决定。加上本次浮点加法的误差，得到$v_0$的误差界：
 \begin{leancode}
 have v0_bound : diff_gamma_bound u (n + 3) hv.v0 hv_fl.v0
 \end{leancode}
 
-由上文证明，$\hat{s}$有$n+2$阶界，$\hat{v_0}$有$n+3$阶界，由定理~\ref{thm:mul-bound}，$\hat{s}\cdot\hat{v_0}$有$2n+5$阶界。再考虑一次乘法引入的误差，我们有：
+由上文，变量$s$有$n+2$阶界，变量$v_0$有$n+3$阶界。依据定理~\ref{thm:mul-bound}，乘积$s\cdot v_0$有$2n+5$阶界。加上本次浮点乘法操作的误差，得到变量$p$的界：
 \begin{leancode}
 have p_bound : diff_gamma_bound u (2 * n + 6) hv.p hv_fl.p
 \end{leancode}
 
-由引理~\ref{lem:inv-bound}，可以得到$\hat{\frac{1}{p}}$的界：
+由引理~\ref{lem:inv-bound}，取倒数后误差阶数翻倍，得出倒数$1/p$的误差界：
 \begin{leancode}
 have p_bound' : diff_gamma_bound u (4 * n + 12) (1 / hv.p) (1 / hv_fl.p)
 \end{leancode}
 
-$\hat{\beta}=fl(\hat{\frac{1}{p}})$，因此相比上面再增加一次误差：
+因$\hat{\beta}=fl(\frac{1}{\hat{p}})$，增加一次浮点赋值误差，得到$\beta$的界：
 \begin{leancode}
 have β_bound : diff_gamma_bound u (4 * n + 13) hv.β hv_fl.β
 \end{leancode}
 
-和$l$的界相同，开方不会放大输入的误差，再考虑一次开根运算引入的误差，我们有：
+与计算$l$的步骤相似，开根运算不放大误差阶数。叠加本次开根号的浮点误差后，得到变量$b$的界：
 \begin{leancode}
 have b_bound : diff_gamma_bound u (4 * n + 14) hv.b hv_fl.b
 \end{leancode}
 
-最后，对$x_1$以外的分量，$\hat{v_i}=fl(\hat{b}\cdot x_i)$，由定理~\ref{thm:mul-bound}，$\hat{v_i}$的界为$4n+15$阶。对于第一个分量，$\hat{v_0}=\hat{b}\cdot\hat{v_0}$，同样由定理~\ref{thm:mul-bound}，$\hat{v_0}$的界为$5n+18$阶。因此，向量每个分量的界都被$5n+18$阶控制。
+最后计算输出向量的分量误差。对于首位以外的分量$i>1$，由式$\hat{v_i}=fl(\hat{b}\cdot x_i)$及乘法定理~\ref{thm:mul-bound}，由于$x_i$为精确常量，$\hat{v_i}$的误差界为$4n+15$阶。对于首位分量，$\hat{v_1}=fl(\hat{b}\cdot\hat{v_0})$，由于$\hat{v_0}$带有$n+3$阶误差，故由乘法定理知$\hat{v_1}$的误差界为$5n+18$阶。为统一定义，取各个分量的最大误差界，即最终输出向量的所有分量均被$5n+18$阶常数界控制。
 \end{proof}
 
 \chapter*{参考文献}
