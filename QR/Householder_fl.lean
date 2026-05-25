@@ -53,7 +53,7 @@ theorem Lemma_19_1 (n : ℕ) (x : Vec n) (hn : n ≠ 0) (hx : x ≠ 0) (hv_fl : 
       exact sqrt_trans_gamma_bound u (n + 1) hv.l' hv_fl.l' (l'_nonneg n x hn) (by simpa only [Nat.cast_add, Nat.cast_one] using this) l'_bound
     rw [expand_l, hv_back]
     have hnu' : (n + 1 + 1 : ℝ) * (u : ℝ) < 1 := by linarith [hnu]
-    exact diff_gamma_bound_trans u (n + 1) 1 √hv.l' √hv_fl.l' hv_fl.l (by simpa only [Nat.cast_add, Nat.cast_one] using hnu') this (fl_to_gammma_bound u _ _ hu hfl_l)
+    exact diff_gamma_bound_trans u (n + 1) 1 √hv.l' √hv_fl.l' hv_fl.l (by simpa only [Nat.cast_add, Nat.cast_one] using hnu') this (fl_to_gamma_bound u _ _ hu hfl_l)
   have s_bound : diff_gamma_bound u (n + 2) hv.s hv_fl.s := by
     rw [expand_s, hv_back, hfl_s]
     rw [diff_gamma_bound] at l_bound ⊢
@@ -98,7 +98,7 @@ theorem Lemma_19_1 (n : ℕ) (x : Vec n) (hn : n ≠ 0) (hx : x ≠ 0) (hv_fl : 
     exact h
   have β_bound : diff_gamma_bound u (4 * n + 13) hv.β hv_fl.β := by
     rw [expand_β, hv_back]
-    have := fl_to_gammma_bound u (1 / hv_fl.p) hv_fl.β hu hfl_β
+    have := fl_to_gamma_bound u (1 / hv_fl.p) hv_fl.β hu hfl_β
     have hnu' : (4 * n + 12 + 1 : ℝ) * (u : ℝ) < 1 := by
       have := convert_hnu u n 8 26 4 13 (by linarith) (by linarith) hnu
       linarith
@@ -110,14 +110,14 @@ theorem Lemma_19_1 (n : ℕ) (x : Vec n) (hn : n ≠ 0) (hx : x ≠ 0) (hv_fl : 
       have := convert_hnu u n 8 26 4 14 (by linarith) (by linarith) hnu
       linarith
     have h1 := sqrt_trans_gamma_bound u (4 * n + 13) hv.β hv_fl.β (beta_nonneg n x hn) (by simpa using hnu₁) β_bound
-    have h2 := fl_to_gammma_bound u (√hv_fl.β) hv_fl.b hu hfl_b
+    have h2 := fl_to_gamma_bound u (√hv_fl.β) hv_fl.b hu hfl_b
     exact diff_gamma_bound_trans u (4 * n + 13) 1 (√hv.β) (√hv_fl.β) hv_fl.b (by simpa only [Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat, Nat.cast_one] using hnu₂) h1 h2
   rw [expand_v, expand_v', hv_back]
   rw [diff_gamma_bound_vec]
   rw [fl_smul_vec] at hfl_v
   simp only [Pi.smul_apply, smul_eq_mul]
   intro i
-  have v_bound := fl_to_gammma_bound u (hv_fl.b * hv_fl.v' i) (hv_fl.v i) hu (hfl_v i)
+  have v_bound := fl_to_gamma_bound u (hv_fl.b * hv_fl.v' i) (hv_fl.v i) hu (hfl_v i)
   rw [hfl_v'] at v_bound
   by_cases hi : i = ⟨0, Nat.pos_of_ne_zero hn⟩
   · simp only [hi, ↓reduceIte] at v_bound ⊢

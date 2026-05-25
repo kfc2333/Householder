@@ -375,7 +375,7 @@ lemma mul_bound
 
 def fl (x x' : ℝ) : Prop :=
   ∃ δ : ℝ, |δ| ≤ (u : ℝ) ∧ x * (1 + δ) = x'
-lemma fl_to_gammma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
+lemma fl_to_gamma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
   fl u x x' → diff_gamma_bound u 1 x x' := by
   rintro ⟨δ, hδ, hfl⟩
   rw [diff_gamma_bound, ← hfl]
@@ -397,7 +397,7 @@ lemma fl_to_gammma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
 lemma fl_bound (n : ℕ) (x x' x'' : ℝ) (hnu : ((n : ℝ) + 1) * (u : ℝ) < 1) (hbound : diff_gamma_bound u n x x') (hfl : fl u x' x'') :
   diff_gamma_bound u (n + 1) x x'' := by
   have hbound' : diff_gamma_bound u 1 x' x'' := by
-    apply fl_to_gammma_bound u x' x''
+    apply fl_to_gamma_bound u x' x''
     · calc
       _ = 1 * (u : ℝ) := by exact (one_mul (u : ℝ)).symm
       _ ≤ (n + 1 : ℝ) * (u : ℝ) := by
@@ -441,7 +441,7 @@ lemma fl_add_bound
       _ < _ := hnu
     rw [fl_add] at hfl_add
     have h1 : diff_gamma_bound u 1 (x' + y') z := by
-      apply fl_to_gammma_bound u (x' + y') z
+      apply fl_to_gamma_bound u (x' + y') z
       · exact hu
       · exact hfl_add
     have h2 : diff_gamma_bound u (nx ⊔ ny) (x + y) (x' + y') := by
@@ -473,7 +473,7 @@ lemma fl_add_bound'
       _ < _ := hnu
     rw [fl_add] at hfl_add
     have h1 : diff_gamma_bound u 1 (x' + y') z := by
-      apply fl_to_gammma_bound u (x' + y') z
+      apply fl_to_gamma_bound u (x' + y') z
       · exact hu
       · exact hfl_add
     have h2 : diff_gamma_bound u (nx ⊔ ny) (x + y) (x' + y') := by
@@ -504,7 +504,7 @@ lemma fl_mul_bound
       _ < _ := hnu
     rw [fl_mul] at hfl_mul
     have h1 : diff_gamma_bound u 1 (x' * y') z := by
-      apply fl_to_gammma_bound u (x' * y') z
+      apply fl_to_gamma_bound u (x' * y') z
       · exact hu
       · exact hfl_mul
     have h2 : diff_gamma_bound u (nx + ny) (x * y) (x' * y') := by
@@ -554,7 +554,7 @@ theorem fl_vec_dot_bound
     obtain ⟨p, s, hp, hfl_vec_dot, hfl_add⟩ := hfl
     have s_bound : diff_gamma_bound u (n + 1) (∑ i, x (Fin.succ i) * x (Fin.succ i)) s := ih hnu_n (fun i => x (Fin.succ i)) s hfl_vec_dot
     have p_bound : diff_gamma_bound u 1 (x 0 * x 0) p := by
-      exact fl_to_gammma_bound u (x 0 * x 0) p hu hp
+      exact fl_to_gamma_bound u (x 0 * x 0) p hu hp
     have sum_nonneg : (∑ i, x (Fin.succ i) * x (Fin.succ i)) ≥ 0 := by
       apply Finset.sum_nonneg
       intro i hi

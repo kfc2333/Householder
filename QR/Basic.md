@@ -150,7 +150,7 @@ def fl (x x' : ℝ) : Prop :=
 这是最基础的浮点模型。它表示 `x'` 可以看成 `x` 经过一个大小不超过 `u` 的相对扰动得到。
 
 ```lean
-lemma fl_to_gammma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
+lemma fl_to_gamma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
   fl u x x' → diff_gamma_bound u 1 x x'
 ```
 把基础浮点模型 `fl` 变成 `diff_gamma_bound` 的一阶误差界。它说明一次浮点运算的误差可以纳入 `γ_1` 控制。
