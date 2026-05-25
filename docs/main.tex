@@ -376,7 +376,7 @@ lemma pos_diff_gamma_bound_pos (n : ℕ) (x x' : ℝ)
   (hbound : diff_gamma_bound u n x x') :
     x' > 0 
 \end{leancode}
-$\gamma_n<1$时浮点误差不会导致被计算结果的正负号改变。
+$\gamma_n<1$时浮点误差不会导致计算结果的正负号改变。
 
 \begin{theorem}
   误差的传递性
@@ -393,6 +393,7 @@ theorem diff_gamma_bound_trans (n₁ n₂ : ℕ) (x x' x'' : ℝ)
 误差阶数满足可加性，从而可以推出在复合运算下误差界的传递性。
 
 \begin{theorem}
+\label{thm:add-bound-nonneg}
   加法运算误差的界
 \end{theorem}
 \begin{leancode}
@@ -417,6 +418,7 @@ lemma add_bound_nonneg
 最后一步中用到了$x, y$同号的性质。在Lean代码中将其分成了两种情况。
 
 \begin{theorem}
+\label{thm:mul-bound}
   乘法运算误差的界
 \end{theorem}
 \begin{leancode}
@@ -464,7 +466,7 @@ lemma fl_to_gammma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
 def diff_gamma_bound_vec (n : ℕ) {m : ℕ} (x : Vec m) (x' : Vec m) : 
   Prop := ∀ i, diff_gamma_bound u n (x i) (x' i)
 \end{leancode}
-向量在$n$阶界内，等价于每一个分量都在$n$阶界内。
+向量误差在$n$阶界内，等价于每一个分量的误差都在$n$阶界内。
 
 \begin{definition}
   基础运算的浮点误差界
@@ -494,11 +496,12 @@ def fl_vec_dot : {n : ℕ} → Vec n → Vec n → ℝ → Prop
       (fun i => y (Fin.succ i)) s ∧
       fl_add u p s z
 \end{leancode}
-定义了带误差的向量点乘。我们递归地定义这个过程。当$n=0$时，点乘结果为$0$。当$n>0$时，我们先计算第一个分量的乘积$p$，再递归计算剩余分量的点乘结果$s$，最后将两者相加得到最终结果$z$。每一步运算都满足一次浮点误差界。
+定义了带误差的向量点乘。我们递归地定义这个过程。当$n=0$时，点乘结果为$0$。当$n>0$时，我们先计算一个分量的乘积$p$，再递归计算剩余分量的点乘结果$s$，最后将两者相加得到最终结果$z$。每一步运算都满足一次浮点误差界。
 
 注意这里相比于真实场景中的向量内积，额外引入了$n=1$时一次没有必要的$x_1y_1+0$运算，并且没有额外规定这次运算的误差为$0$。这会导致给出的内积运算的界从$n$阶变为$n+1$阶，对得到的结论影响不大，并且可以简化证明。
 
 \begin{theorem}
+\label{thm:fl-vec-dot-bound}
   向量自内积误差的界
 \end{theorem}
 \begin{leancode}
@@ -509,41 +512,44 @@ theorem fl_vec_dot_bound
   (hfl : fl_vec_dot u x x z) :
     diff_gamma_bound u (n + 1) (x ⬝ x) z 
 \end{leancode}
-向量内积自身的计算结果在$n+1$阶误差界内。与原书中第3.1章得到的结论不同，我们将条件修改为向量内积自身（在下面的证明中也只需要用到这种内积），而不是任意的两个向量点乘。从而我们可以得到更强的、直接关于计算得数的误差界。
+向量内积自身的计算结果在$n+1$阶误差界内。与原书中第3.1章得到的结论不同，我们将条件修改为向量与自身内积（在下面的证明中也只需要用到这种内积），而不是任意的两个向量点乘。从而我们可以得到更强的、直接关于计算得数的误差界。
 \begin{proof}
   记$s_i=x_1x_1+\cdots+x_ix_i$。我们有
   \begin{align*}
-    \hat{s_1}&=fl(0+fl(x_1x_1))\\
+    \widehat{s_1}&=fl(0+fl(x_1x_1))\\
     &=fl(x_1x_1)(1+\theta_1)\\
     &=x_1x_1(1+\theta_2)\\
-    \hat{s_i}&=fl(\hat{s_{i-1}}+fl(x_ix_i))\\
-    &=(\hat{s_{i-1}}+x_ix_i(1+\theta_1))(1+\theta_1)\\
+    \widehat{s_i}&=fl(\widehat{s_{i-1}}+fl(x_ix_i))\\
+    &=(\widehat{s_{i-1}}+x_ix_i(1+\theta_1))(1+\theta_1)\\
     &=(s_{i-1}(1+\theta_{i})+x_ix_i(1+\theta_1))(1+\theta_1)\\
     &=(s_{i-1}+x_ix_i)(1+\theta_{i+1})\\
     &=s_i(1+\theta_{i+1})
   \end{align*}
-  即得$\hat{s_n}=s_n(1+\theta_{n+1})$。
+  
+  即得$\widehat{s_n}=s_n(1+\theta_{n+1})$。
 \end{proof}
 
 \begin{lemma}
+\label{lem:sqrt-bound}
   误差界受开方运算的影响
 \end{lemma}
 \begin{leancode}
-  lemma sqrt_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x ≥ 0)
-    (hnu : 2 * (n : ℝ) * (u : ℝ) < 1) 
-    (h_bound : diff_gamma_bound u n x x') :
-      diff_gamma_bound u n (Real.sqrt x) (Real.sqrt x') 
+lemma sqrt_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x ≥ 0)
+  (hnu : 2 * (n : ℝ) * (u : ℝ) < 1) 
+  (h_bound : diff_gamma_bound u n x x') :
+    diff_gamma_bound u n (Real.sqrt x) (Real.sqrt x') 
 \end{leancode}
 若$x'=x(1+\theta_n)$且$x\ge 0$，则$\sqrt{x'}$仍然被$\sqrt{x}$在$n$阶误差界内控制。这里其实可以放成$n/2$阶，但为了简化证明我们直接放成$n$阶。
 
 \begin{lemma}
+\label{lem:inv-bound}
   误差界受取倒数运算的影响
 \end{lemma}
 \begin{leancode}
-  lemma div_inv_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x > 0)
-    (hnu : 2 * (n : ℝ) * (u : ℝ) < 1)
-    (h_bound : diff_gamma_bound u n x x') :
-      diff_gamma_bound u (2 * n) (1 / x) (1 / x') 
+lemma div_inv_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x > 0)
+  (hnu : 2 * (n : ℝ) * (u : ℝ) < 1)
+  (h_bound : diff_gamma_bound u n x x') :
+    diff_gamma_bound u (2 * n) (1 / x) (1 / x') 
 \end{leancode}
 若$x'=x(1+\theta_n)$且$x>0$，则$1/x'$被$1/x$在$2n$阶误差界内控制。
 
@@ -650,32 +656,145 @@ def householder (n : ℕ) (x : Vec n) (hn : n ≠ 0) :
 \end{leancode}
 % 这里leancode里面let l' := x ⬝ x一行其实应该是let l' := x ⬝ᵥ x, 渲染不出来就把这个v去掉了
 
+\begin{theorem}
+  Householder算法的正确性
+\end{theorem}
+\begin{leancode}
+theorem e₁_of_householder
+  (n : ℕ)
+  (x : Vec n)
+  (hn : n ≠ 0)
+  (hx : x ≠ 0) :
+    let hv := householder n x hn
+    let P := 1 - (vecMulVec hv.v hv.v)
+      P • x = e₁ n x hn
+\end{leancode}
 \begin{proof}
 反复代入可知
 $$
 v'=x-\bigl(-\left(\sign x_1\right)\|x\|_2e_1\bigr).
 $$
+
 由第2.1.2节的结论我们有
 $$
 (I - \frac{2}{v'^Tv'}v'v'^T)x=-\left(\sign x_1\right)\|x\|_2e_1.
 $$
+
 另一方面，由定义$p=sv_1=sx_1+s^2$，并且
 $$
 v'^Tv'=x^Tx+2sx_1+s^2=2sx_1+2s^2=2p.
 $$
+
 因此
 $$
 b=\sqrt{\beta}=\sqrt{\frac{1}{p}}=\sqrt{\frac{2}{v'^Tv'}}.
 $$
+
 令$v=bv'$，则有
 $$
 v^Tv=b^2v'^Tv'=\frac{2}{v'^Tv'}v'^Tv'=2.
 $$
+
 从而
 $$
 I-\frac{2}{v'^Tv'}v'v'^T=I-vv^T.
 $$
+
 因此最后一步中的缩放因子$b$将向量归一化，使Householder矩阵从标准形式$I-\frac{2}{v'^Tv'}v'v'^T$化为计算上更为简洁的$I-vv^T$。
+\end{proof}
+
+以上的证明过程中引用了前序的结论，然而在Lean中我们需要单独证明。详细的证明过程可以查看代码库中的Householder.lean。
+
+\section{Householder法的误差估计}
+
+\begin{definition}
+  带误差的Householder过程
+\end{definition}
+\begin{leancode}
+def fl_householder (n : ℕ) (x : Vec n) (hn : n ≠ 0)
+  (hv_fl : Householder n hn) : Prop :=
+    -- (1) l' = fl(xTx)
+    fl_vec_dot u x x hv_fl.l' ∧
+    -- (2) l = fl(sqrt(l'))
+    fl u (Real.sqrt hv_fl.l') hv_fl.l ∧
+    hv_fl.s = sign x hn * hv_fl.l ∧
+    -- (3) v₀ = fl(x₀ + s)
+    fl_add u (x ⟨0, Nat.pos_of_ne_zero hn⟩) hv_fl.s hv_fl.v0 ∧
+    -- (4) p = fl(s * v₀)
+    fl_mul u hv_fl.s hv_fl.v0 hv_fl.p ∧
+    -- (5) β = fl(1 / p)
+    fl u (1 / hv_fl.p) hv_fl.β ∧
+    -- (6) b = fl(√β)
+    fl u (Real.sqrt hv_fl.β) hv_fl.b ∧
+    -- (7) v = fl(b • v')
+    hv_fl.v' = (fun i => if i = ⟨0, Nat.pos_of_ne_zero hn⟩ 
+                          then hv_fl.v0 
+                          else (x i)) ∧
+    fl_smul_vec u hv_fl.b hv_fl.v' hv_fl.v
+\end{leancode}
+我们将带误差的Householder过程定义为若干个变量之间的链式关系，每个变量都和之前的变量满足某个浮点误差约束。我们将证明每传递一段，误差阶数都会增加一些，最终得到结果的误差阶数。
+
+\begin{theorem}
+  Householder算法误差的界（即参考文献中的引理19.1）
+\end{theorem}
+\begin{leancode}
+theorem Lemma_19_1 (n : ℕ) (x : Vec n) 
+  (hn : n ≠ 0) (hx : x ≠ 0) 
+  (hv_fl : Householder n hn) 
+  (hnu : (8 * n + 26 : ℝ) * (u : ℝ) < 1) 
+  (hfl : fl_householder u n x hn hv_fl) :
+    diff_gamma_bound_vec u (5 * n + 18)
+    (householder n x hn).v hv_fl.v
+\end{leancode}
+即$\forall 1\le i\le n,\ \exists\delta_i,\ |\delta_i|\le\gamma_{5n+18},\ \hat{v_i}=v_i(1+\theta_i)$。 
+
+\begin{proof}
+我们从前向后，逐个证明计算每个变量的误差的界。首先我们假设精确的Householder过程为hv：
+\begin{leancode}
+  let hv := householder n x hn
+\end{leancode}
+
+直接应用$l'$的定义和定理~\ref{thm:fl-vec-dot-bound}，我们有
+\begin{leancode}
+have l'_bound : diff_gamma_bound u (n + 1) hv.l' hv_fl.l'
+\end{leancode}
+
+由引理~\ref{lem:sqrt-bound}，上面的界可以传递到$\sqrt{\hat{l'}}$。再考虑一次开根运算引入的误差，我们有：
+\begin{leancode}
+have l_bound : diff_gamma_bound u (n + 2) hv.l hv_fl.l
+\end{leancode}
+
+乘$1$或$-1$不会引入误差，因此$s$的界与$l$相同：
+\begin{leancode}
+have s_bound : diff_gamma_bound u (n + 2) hv.s hv_fl.s
+\end{leancode}
+
+由$s$的定义，我们知道$s$与$x_1$同时非负或非正。因此由引理~\ref{thm:add-bound-nonneg}以及它的非正版本，上面的界可以传递到$\hat{x_1}+\hat{s}$。再考虑一次加法引入的误差，我们有：
+\begin{leancode}
+have v0_bound : diff_gamma_bound u (n + 3) hv.v0 hv_fl.v0
+\end{leancode}
+
+由上文证明，$\hat{s}$有$n+2$阶界，$\hat{v_0}$有$n+3$阶界，由定理~\ref{thm:mul-bound}，$\hat{s}\cdot\hat{v_0}$有$2n+5$阶界。再考虑一次乘法引入的误差，我们有：
+\begin{leancode}
+have p_bound : diff_gamma_bound u (2 * n + 6) hv.p hv_fl.p
+\end{leancode}
+
+由引理~\ref{lem:inv-bound}，可以得到$\hat{\frac{1}{p}}$的界：
+\begin{leancode}
+have p_bound' : diff_gamma_bound u (4 * n + 12) (1 / hv.p) (1 / hv_fl.p)
+\end{leancode}
+
+$\hat{\beta}=fl(\hat{\frac{1}{p}})$，因此相比上面再增加一次误差：
+\begin{leancode}
+have β_bound : diff_gamma_bound u (4 * n + 13) hv.β hv_fl.β
+\end{leancode}
+
+和$l$的界相同，开方不会放大输入的误差，再考虑一次开根运算引入的误差，我们有：
+\begin{leancode}
+have b_bound : diff_gamma_bound u (4 * n + 14) hv.b hv_fl.b
+\end{leancode}
+
+最后，对$x_1$以外的分量，$\hat{v_i}=fl(\hat{b}\cdot x_i)$，由定理~\ref{thm:mul-bound}，$\hat{v_i}$的界为$4n+15$阶。对于第一个分量，$\hat{v_0}=\hat{b}\cdot\hat{v_0}$，同样由定理~\ref{thm:mul-bound}，$\hat{v_0}$的界为$5n+18$阶。因此，向量每个分量的界都被$5n+18$阶控制。
 \end{proof}
 
 \chapter*{参考文献}
