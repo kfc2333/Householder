@@ -6,10 +6,15 @@
 \usepackage{amsmath}
 \usepackage{amsthm}
 \DeclareMathOperator{\sign}{sign}
+\providecommand*{\theoremautorefname}{定理}
 
 \usepackage{fontspec}
 % switch to a monospace font supporting more Unicode characters
 \setmonofont{FreeMono}
+\usepackage{newunicodechar}
+\newfontfamily{\freeserif}{DejaVu Sans}
+\newunicodechar{✝}{\freeserif{✝}}
+\newunicodechar{𝓞}{\ensuremath{\mathcal{O}}}
 \usepackage{xcolor}
 \usepackage{minted}
 \fvset{
@@ -59,10 +64,11 @@
 \theoremstyle{qrplain}
 \newtheorem{definition}{定义}[chapter]
 \newtheorem{theorem}[definition]{定理}
+\newtheorem{lemma}[definition]{引理}
 {}
 \renewenvironment{proof}[1][证明]
-{\qrthmchinese\bfseries}
-{\endgroup\hfill$\square$\par}
+{\par\noindent{\qrthmchinese\bfseries #1. }\ignorespaces}
+{\hfill$\square$\par}
 
 % 页眉页脚
 \usepackage{fancyhdr}
@@ -303,12 +309,12 @@ variable (u : NNReal)
 浮点误差模型部分和上一章中定义相同，不再赘述。
 
 \begin{definition}
-  记$\gamma_n=nu/(1-nu)$
+  浮点误差阶数
 \end{definition}
 \begin{leancode}
 def γ (n : ℕ) : ℝ := (n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ))
 \end{leancode}
-为n次浮点舍入后计算结果与正确结果的相对误差。书中为避免对常数的讨论，还定义了$\widetilde{\gamma_n}=\gamma_{cn}$。本文由于在所有需要使用这个参数的地方都已经将常数$c$显式计算出来，因此不再使用此参数。
+我们定义$\gamma_n=nu/(1-nu)$为n次浮点舍入后计算结果与正确结果的相对误差。书中为避免对常数的讨论，还定义了$\widetilde{\gamma_n}=\gamma_{cn}$。本文由于在所有需要使用这个参数的地方都已经将常数$c$显式计算出来，因此不再使用此参数。
 
 对于某个特定的运算序列，我们用
 $$|\theta_n|\le\gamma_n,\quad\theta_n\in\mathbb{R}$$
@@ -330,6 +336,269 @@ $$
 
 对于计算过程中的任意中间值$a$，我们记$a$为其在精确计算时得到的结果，$\hat{a}$为其在有浮点误差的环境中计算得到的结果。
 
+\section{基础浮点运算的误差估计}
+
+本节我们将跟随Basic.lean中的顺序，给出一些浮点运算中误差估计的基础结果，并证明一些在证明中会用到的引理。
+
+\begin{theorem}
+\label{thm:gamma-mul-le}
+  浮点误差阶数的可加性
+\end{theorem}
+\begin{leancode}
+lemma gamma_mul_le (n₁ n₂ : ℕ) 
+  (hnu : ((n₁ + n₂) : ℝ) * (u : ℝ) < 1) :
+    (γ u n₁ + 1) * (γ u n₂ + 1) ≤ γ u (n₁ + n₂) + 1
+\end{leancode}
+即$n_1$次和$n_2$次的误差叠加后不超过$n_1+n_2$次的误差。
+\begin{proof}
+  展开定义可知结果等价于
+  $$\frac{1}{1-un_1}\cdot\frac{1}{1-un_2} \le \frac{1}{1-u(n_1+n_2)}$$
+  当分母都为正时成立。
+\end{proof}
+
+\begin{definition}
+  误差界
+\end{definition}
+\begin{leancode}
+def diff_gamma_bound (n : ℕ) (x x' : ℝ) : Prop :=
+  |x - x'| ≤ γ u n * |x|
+def diff_gamma_bound_theta (n : ℕ) (x x' : ℝ) : Prop :=
+  ∃ θ : ℝ, x' = x * (1 + θ) ∧ |θ| ≤ γ u n
+\end{leancode}
+为了定量的控制误差的阶数，我们定义两个等价的误差类表示$x'$在$x$的$\gamma_n$误差界内。第一个定义直接给出了误差界的定义。第二个定义则使用存在论断给出相同命题，在需要对误差做复杂计算时更方便。两个定义显然是等价的。
+
+\begin{lemma}
+  误差的保号性
+\end{lemma}
+\begin{leancode}
+lemma pos_diff_gamma_bound_pos (n : ℕ) (x x' : ℝ) 
+  (hnu : 2 * (n : ℝ) * (u : ℝ) < 1) (hx : x > 0) 
+  (hbound : diff_gamma_bound u n x x') :
+    x' > 0 
+\end{leancode}
+$\gamma_n<1$时浮点误差不会导致被计算结果的正负号改变。
+
+\begin{theorem}
+  误差的传递性
+\end{theorem}
+\begin{leancode}
+theorem diff_gamma_bound_trans (n₁ n₂ : ℕ) (x x' x'' : ℝ) 
+  (hnu : ((n₁ + n₂) : ℝ) * (u : ℝ) < 1) 
+  (hbound₁ : diff_gamma_bound u n₁ x x') 
+  (hbound₂ : diff_gamma_bound u n₂ x' x'') :
+    diff_gamma_bound u (n₁ + n₂) x x'' 
+\end{leancode}
+定理~\ref{thm:gamma-mul-le}的应用。若$x$经历了一次$n_1$阶误差界的计算得到$x'$，又经历了一次$n_2$阶误差界的计算得到$x''$，则$x''$在$x$的$n_1+n_2$阶误差界内。
+
+误差阶数满足可加性，从而可以推出在复合运算下误差界的传递性。
+
+\begin{theorem}
+  加法运算误差的界
+\end{theorem}
+\begin{leancode}
+lemma add_bound_nonneg
+  (nx ny : ℕ) (x y x' y' : ℝ)
+  (hx : x ≥ 0) (hy : y ≥ 0)
+  (hnu : ((nx ⊔ ny) : ℝ) * (u : ℝ) < 1)
+  (hboundx : diff_gamma_bound u nx x x')
+  (hboundy : diff_gamma_bound u ny y y') :
+    diff_gamma_bound u (nx ⊔ ny) (x + y) (x' + y')
+\end{leancode}
+当$x, y\ge 0$时，若$x'=(1+\theta_{n_x})x,\ y'=(1+\theta_{n_y})y$，那么$x'+y'$被$x+y$在$x', y'$中误差阶数较高的阶数控制。
+\begin{proof}
+  由定义可知
+  \begin{align*}
+    |(x' + y') - (x + y)| &\le |x' - x| + |y' - y| \\
+    &\le \gamma_{nx}|x| + \gamma_{ny}|y| \\
+    &\le \gamma_{\max{nx, ny}}(|x| + |y|)\\
+    &= \gamma_{\max{nx, ny}}|x + y|
+  \end{align*}
+\end{proof}
+最后一步中用到了$x, y$同号的性质。在Lean代码中将其分成了两种情况。
+
+\begin{theorem}
+  乘法运算误差的界
+\end{theorem}
+\begin{leancode}
+lemma mul_bound
+  (nx ny : ℕ) (x y x' y' : ℝ)
+  (hnu : ((nx + ny) : ℝ) * (u : ℝ) < 1)
+  (hboundx : diff_gamma_bound u nx x x')
+  (hboundy : diff_gamma_bound u ny y y') :
+    diff_gamma_bound u (nx + ny) (x * y) (x' * y')
+\end{leancode}
+若$x'=(1+\theta_{n_x})x,\ y'=(1+\theta_{n_y})y$，那么$x'y'$被$xy$在$n_x+n_y$阶误差界内控制。
+\begin{proof}
+  由定义可知
+  \begin{align*}
+    |x'y' - xy| &\le |x'y' - x'y| + |x'y - xy| \\
+    &\le |x'||y' - y| + |y||x' - x| \\
+    &\le (1 + \gamma_{nx})|x|\cdot\gamma_{ny}|y| + |y|\cdot\gamma_{nx}|x| \\
+    &\le (\gamma_{nx} + \gamma_{ny} + \gamma_{nx}\gamma_{ny})|x||y|\\
+    &\le \gamma_{nx + ny}|xy|
+  \end{align*}
+\end{proof}
+
+\begin{definition}
+  浮点误差
+\end{definition}
+\begin{leancode}
+def fl (x x' : ℝ) : Prop :=
+  ∃ δ : ℝ, |δ| ≤ (u : ℝ) ∧ x * (1 + δ) = x'
+\end{leancode}
+对于一次基本的浮点运算，我们定义其结果$x'$与正确结果$x$之间的关系为存在一个$\delta$使得$x' = x(1+\delta)$且$|\delta|\le u$。也即误差的相对比值被$u$控制。
+
+\begin{lemma}
+  浮点误差界与$\gamma$误差界的关系
+\end{lemma}
+\begin{leancode}
+lemma fl_to_gammma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
+  fl u x x' → diff_gamma_bound u 1 x x'
+\end{leancode}
+显然由于$u>\gamma_1$，一次基本的浮点运算的误差界被$\gamma_1$控制。
+
+\begin{definition}
+  向量的浮点误差界
+\end{definition}
+\begin{leancode}
+def diff_gamma_bound_vec (n : ℕ) {m : ℕ} (x : Vec m) (x' : Vec m) : 
+  Prop := ∀ i, diff_gamma_bound u n (x i) (x' i)
+\end{leancode}
+向量在$n$阶界内，等价于每一个分量都在$n$阶界内。
+
+\begin{definition}
+  基础运算的浮点误差界
+\end{definition}
+\begin{leancode}
+def fl_add (x y z : ℝ) : Prop :=
+  fl u (x + y) z
+def fl_mul (x y z : ℝ) : Prop :=
+  fl u (x * y) z
+def fl_smul_vec (a : ℝ)
+  (x : Vec n) (y : Vec n) : Prop :=
+    ∀ i, fl u (a * x i) (y i)
+\end{leancode}
+定义了会用到的加法，乘法及向量数乘三种运算。定义即为运算结果在一次浮点误差界以内。
+
+\begin{definition}
+  带误差的向量点乘
+\end{definition}
+\begin{leancode}
+def fl_vec_dot : {n : ℕ} → Vec n → Vec n → ℝ → Prop
+  | 0, _, _, z => z = 0
+  | n + 1, x, y, z =>
+    ∃ p s : ℝ,
+      fl_mul u (x 0) (y 0) p ∧
+      fl_vec_dot
+      (fun i => x (Fin.succ i))
+      (fun i => y (Fin.succ i)) s ∧
+      fl_add u p s z
+\end{leancode}
+定义了带误差的向量点乘。我们递归地定义这个过程。当$n=0$时，点乘结果为$0$。当$n>0$时，我们先计算第一个分量的乘积$p$，再递归计算剩余分量的点乘结果$s$，最后将两者相加得到最终结果$z$。每一步运算都满足一次浮点误差界。
+
+注意这里相比于真实场景中的向量内积，额外引入了$n=1$时一次没有必要的$x_1y_1+0$运算，并且没有额外规定这次运算的误差为$0$。这会导致给出的内积运算的界从$n$阶变为$n+1$阶，对得到的结论影响不大，并且可以简化证明。
+
+\begin{theorem}
+  向量自内积误差的界
+\end{theorem}
+\begin{leancode}
+theorem fl_vec_dot_bound
+  (n : ℕ)
+  (hnu : ((n : ℝ) + 1) * (u : ℝ) < 1)
+  (x : Vec n) (z : ℝ)
+  (hfl : fl_vec_dot u x x z) :
+    diff_gamma_bound u (n + 1) (x ⬝ x) z 
+\end{leancode}
+向量内积自身的计算结果在$n+1$阶误差界内。与原书中第3.1章得到的结论不同，我们将条件修改为向量内积自身（在下面的证明中也只需要用到这种内积），而不是任意的两个向量点乘。从而我们可以得到更强的、直接关于计算得数的误差界。
+\begin{proof}
+  记$s_i=x_1x_1+\cdots+x_ix_i$。我们有
+  \begin{align*}
+    \hat{s_1}&=fl(0+fl(x_1x_1))\\
+    &=fl(x_1x_1)(1+\theta_1)\\
+    &=x_1x_1(1+\theta_2)\\
+    \hat{s_i}&=fl(\hat{s_{i-1}}+fl(x_ix_i))\\
+    &=(\hat{s_{i-1}}+x_ix_i(1+\theta_1))(1+\theta_1)\\
+    &=(s_{i-1}(1+\theta_{i})+x_ix_i(1+\theta_1))(1+\theta_1)\\
+    &=(s_{i-1}+x_ix_i)(1+\theta_{i+1})\\
+    &=s_i(1+\theta_{i+1})
+  \end{align*}
+  即得$\hat{s_n}=s_n(1+\theta_{n+1})$。
+\end{proof}
+
+\begin{lemma}
+  误差界受开方运算的影响
+\end{lemma}
+\begin{leancode}
+  lemma sqrt_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x ≥ 0)
+    (hnu : 2 * (n : ℝ) * (u : ℝ) < 1) 
+    (h_bound : diff_gamma_bound u n x x') :
+      diff_gamma_bound u n (Real.sqrt x) (Real.sqrt x') 
+\end{leancode}
+若$x'=x(1+\theta_n)$且$x\ge 0$，则$\sqrt{x'}$仍然被$\sqrt{x}$在$n$阶误差界内控制。这里其实可以放成$n/2$阶，但为了简化证明我们直接放成$n$阶。
+
+\begin{lemma}
+  误差界受取倒数运算的影响
+\end{lemma}
+\begin{leancode}
+  lemma div_inv_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x > 0)
+    (hnu : 2 * (n : ℝ) * (u : ℝ) < 1)
+    (h_bound : diff_gamma_bound u n x x') :
+      diff_gamma_bound u (2 * n) (1 / x) (1 / x') 
+\end{leancode}
+若$x'=x(1+\theta_n)$且$x>0$，则$1/x'$被$1/x$在$2n$阶误差界内控制。
+
+原书中基于$u$很小的假设，直接得出了$1/(1+\theta_n)=1+\theta_n$。在更严格的Lean中，我们无法保证$1/(1-\gamma_n)\le 1+\gamma_n$。因此我们被迫把界放宽到$2n$阶。
+\begin{proof}
+  只需证明
+  $$
+  \left\{
+    \begin{array}{rl}
+      1/(1-\gamma_n)&\le 1+\gamma_{2n}\\ 
+      1/(1+\gamma_n)&\ge 1-\gamma_{2n}
+    \end{array}
+  \right.
+  $$
+
+  代入$\gamma$，上两式即为
+  $$
+  \left\{
+    \begin{array}{rl}
+      1/(1-\frac{nu}{1-nu})&\le 1+\frac{2nu}{1-2nu}\\ 
+      1/(1+\frac{nu}{1-nu})&\ge 1-\frac{2nu}{1-2nu}
+    \end{array}
+  \right.
+  $$
+
+  由假设$2nu<1$，上两式的分母都为正。通分得到
+  $$
+  \left\{
+    \begin{array}{rlr}
+      (1-\frac{nu}{1-nu})\cdot (1+\frac{2nu}{1-2nu})&\ge 1&\hfill(1)\\
+      (1+\frac{nu}{1-nu})\cdot (1-\frac{2nu}{1-2nu})&\le 1&\hfill(2)
+    \end{array}
+  \right.
+  $$
+
+  我们分开证明这两个不等式。
+
+  对式(1)：
+  \begin{align*}
+    (1-\frac{nu}{1-nu})\cdot (1+\frac{2nu}{1-2nu})&=1+\gamma_{2n}-\gamma_n-\gamma_n\gamma_{2n}\\
+    &\ge 1+\gamma_{2n}-2\gamma_n\\
+    &=1+\frac{2nu}{1-2nu}-\frac{2nu}{1-nu}\\
+    &\ge1
+  \end{align*}
+  
+  对式(2)：
+  \begin{align*}
+    (1+\frac{nu}{1-nu})\cdot (1-\frac{2nu}{1-2nu})&=1-\gamma_{2n}+\gamma_n-\gamma_n\gamma_2n\\
+    &=1+(\gamma_n-\gamma_{2n})-\gamma_n\gamma_{2n}\\
+    &\le 1
+  \end{align*}
+\end{proof}
+
+以上为Basic.lean中证明的和定义的全部重要内容。我们在后续的证明中会使用这些结果。
+
 \section{Householder过程}
 
 \begin{definition}
@@ -339,14 +608,15 @@ $\forall x\in\mathbb{R}^n,\ x\neq0$，使用如下的Householder算法来求解$
 $$
 \left\{
 \begin{array}{l}
-v = x \\
-l' = v^T v \\
+l' = x^Tx \\
 l = \sqrt{l'} \\
 s = \operatorname{sign}(x)\cdot l \\
 v_1 = x_1 + s \\
 p = s v_1 \\
 \beta = 1/p \\
-b = \sqrt{\beta}
+b = \sqrt{\beta}\\
+v' = \begin{cases}v_1, & i=1 \\ x_i, & i>1\end{cases}\\
+v = b v'
 \end{array}
 \right.
 $$
@@ -363,10 +633,9 @@ structure Householder (n : ℕ) (hn : n ≠ 0) where
   v : Vec n
 
 def householder (n : ℕ) (x : Vec n) (hn : n ≠ 0) :
-  Householder n hn :=
-by
+  Householder n hn := by
   let i₀ : Fin n := ⟨0, Nat.pos_of_ne_zero hn⟩
-  let l' := x ⬝ᵥ x
+  let l' := x ⬝ x
   let l := Real.sqrt l'
   let s := sign x hn * l
   let v0 := x i₀ + s
@@ -379,11 +648,35 @@ by
     v' := v', p := p, β := β, b := b, v := v
   }
 \end{leancode}
+% 这里leancode里面let l' := x ⬝ x一行其实应该是let l' := x ⬝ᵥ x, 渲染不出来就把这个v去掉了
 
-% 把这段写成更正式的证明
-注意到进行到$v_1=x_1+s$一步结束时，$v=x-(-\left(\sign x_1\right)||x||_2e_1)$。由2.1.2节可知，此时有$P=I-\frac{2}{v^Tv}vv^T$是一个解。
-
-又注意到这时$p=sv_1=sx_1+s^2$，$v^Tv=x^Tx+2s x_1+s^2=2sx_1+2s^2=2p$。从而$b=\sqrt\frac{2}{v^Tv}$在最后一步相当于一个归一化因子，使得Householder矩阵$P=I-\frac{2}{v^Tv}vv^T$变为计算中更简便的$P=I-vv^T$的简单形式。
+\begin{proof}
+反复代入可知
+$$
+v'=x-\bigl(-\left(\sign x_1\right)\|x\|_2e_1\bigr).
+$$
+由第2.1.2节的结论我们有
+$$
+(I - \frac{2}{v'^Tv'}v'v'^T)x=-\left(\sign x_1\right)\|x\|_2e_1.
+$$
+另一方面，由定义$p=sv_1=sx_1+s^2$，并且
+$$
+v'^Tv'=x^Tx+2sx_1+s^2=2sx_1+2s^2=2p.
+$$
+因此
+$$
+b=\sqrt{\beta}=\sqrt{\frac{1}{p}}=\sqrt{\frac{2}{v'^Tv'}}.
+$$
+令$v=bv'$，则有
+$$
+v^Tv=b^2v'^Tv'=\frac{2}{v'^Tv'}v'^Tv'=2.
+$$
+从而
+$$
+I-\frac{2}{v'^Tv'}v'v'^T=I-vv^T.
+$$
+因此最后一步中的缩放因子$b$将向量归一化，使Householder矩阵从标准形式$I-\frac{2}{v'^Tv'}v'v'^T$化为计算上更为简洁的$I-vv^T$。
+\end{proof}
 
 \chapter*{参考文献}
 \addcontentsline{toc}{chapter}{参考文献}
