@@ -19,10 +19,10 @@
 \usepackage{minted}
 \fvset{
   vspace=0pt,
-  listparameters=\setlength{\topsep}{0pt}
-    \setlength{\partopsep}{0pt}
-    \setlength{\parsep}{0pt}
-    \setlength{\itemsep}{0pt}
+  listparameters=\setlength{\partopsep}{0.3\baselineskip}
+    % \setlength{\topsep}{0.3\baselineskip}
+    % \setlength{\parsep}{0pt}
+    % \setlength{\itemsep}{0pt}
 }
 \newmintinline[lean]{lean4}{bgcolor=white}
 \newminted[leancode]{lean4}{
@@ -91,7 +91,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \titleformat{\chapter}
-{\centering\heiti\zihao{3}} % 三号黑体居中
+{\centering\sffamily\qrthmchinese\bfseries\zihao{3}} % 三号黑体加粗居中
 {第\chinese{chapter}章}
 {0.5em}
 {}
@@ -145,7 +145,7 @@
 
 % 目录标题
 \renewcommand{\contentsname}{目\quad 录}
-\renewcommand{\cfttoctitlefont}{\hfill\heiti\zihao{-2}}
+\renewcommand{\cfttoctitlefont}{\hfill\qrthmchinese\bfseries\zihao{3}}
 \renewcommand{\cftaftertoctitle}{\hfill}
 \renewcommand{\cftdotsep}{1}
 
@@ -175,6 +175,24 @@
 
 \pagenumbering{gobble}
 \includepdf[pages=-]{header.pdf}
+
+\chapter*{摘要}
+
+随着形式化验证技术的发展，利用定理证明系统对数值算法进行严格验证，已成为提高计算结果可信性的重要研究方向。QR分解是数值线性代数中的基础问题，在科学计算与工程应用中具有广泛用途。在求解QR分解问题的多种算法中，Householder方法是能容忍浮点误差的、具有稳定性的重要方法。本文基于Lean定理证明系统，形式化证明了Householder变换在有误差的浮点运算系统中的稳定性。论文首先对浮点误差模型以及Householder变换中的关键计算过程进行了形式化描述，在此基础上完成了稳定性定理的证明，并给出了误差界的具体常数。研究表明，在合理的机器精度条件下，计算误差能够随向量维度保持线性增长，从而保证算法具有良好的数值稳定性。本文工作展示了Lean在数值线性代数算法验证中的应用能力，为后续数值算法的可信形式化研究提供了参考。
+
+\vspace{\baselineskip}
+
+关键词：数学形式化；Lean；Householder变换；QR分解
+
+\chapter*{ABSTRACT}
+
+With the development of formal verification, Lean has become an effective tool for rigorously analyzing and certifying numerical algorithms. QR decomposition is a fundamental problem in numerical linear algebra with wide applications in scientific computing and engineering. Among the various algorithms used to solve QR decomposition problems, the Householder method is renowned for its stability and tolerance to floating-point errors. This paper presents the formalization of the stability of Householder transformations using the Lean prover. This project formalized the floatpoint error framework and the essential computational steps involved in Householder transformations, and established a formal proof within Lean. Based on this formalization, explicit error bounds are derived, showing that under reasonable machine precision assumptions, the computational error grows linearly with the vector length. This result confirms the numerical stability of the algorithm and demonstrates the effectiveness of Lean in the formal verification of numerical linear algebra proofs, providing a foundation for further work on trustworthy and machine-checked numerical analysis.
+
+\vspace{\baselineskip}
+
+KEYWORDS: Formalization, Lean, Householder transformation, QR decomposition
+
+\newpage
 \tableofcontents
 
 \clearpage
@@ -188,7 +206,7 @@
 
 Householder变换是实现QR分解的重要方法。与经典Gram-Schmidt正交化相比，Householder方法能够有效减小浮点舍入误差带来的影响，因此在实际计算中被广泛采用。其核心思想是通过构造正交反射矩阵，将向量逐步变换为目标方向，从而实现矩阵的正交化过程。由于Householder方法涉及大量浮点运算，其数值稳定性分析一直是数值分析领域的重要研究内容。
 
-传统数值分析通常通过数学推导对算法误差进行估计，并在一定假设条件下证明算法的稳定性。然而，这类证明往往包含复杂的符号推演与多层次误差传播分析，人工验证过程容易出现疏漏。因此，如何利用形式化方法对数值算法进行机器可验证的严格证明，逐渐成为形式化数学与可信计算研究中的重要方向。
+算法的数值稳定性证明往往包含复杂的符号推演与多层次误差传播分析。在验证这类包含大量近似和数值计算的证明时，人力验证容易出现疏漏。因此，人们需要使用能更严谨地验证推理过程正确性的形式化工具来完成证明。
 
 近年来，定理证明辅助系统的发展为数学证明的形式化提供了有效工具。其中，Lean作为一种基于依赖类型理论的交互式定理证明系统，兼具较强的表达能力与较高的自动化水平，已被广泛应用于数学定理验证、程序正确性证明以及形式化数学库构建等领域。通过Lean对数值算法的稳定性结论进行形式化，不仅能够提高证明过程的可靠性，也有助于推动可信科学计算的发展。
 
@@ -204,21 +222,23 @@ Householder变换是实现QR分解的重要方法。与经典Gram-Schmidt正交�
 
 \section{Householder矩阵}
 
-Householder矩阵是数值线性代数中一种重要的正交变换工具，广泛应用于QR分解等矩阵计算算法中。其核心作用是通过一种对称的“反射”变换，将向量或矩阵逐步转换为更便于计算的形式。相比Gram-Schmidt正交化等其他正交化方法，Householder法具有更好的数值稳定性，因此在现代科学计算软件与高性能数值计算中被广泛采用。
+Householder矩阵是数值线性代数中一种重要的正交变换工具，广泛应用于QR分解等矩阵计算算法中。其核心作用是通过一次“反射”变换，将向量或矩阵逐步转换为更便于计算的形式。相比Gram-Schmidt正交化等其他正交化方法，Householder法具有更好的数值稳定性，因此在现代科学计算软件与高性能数值计算中被广泛采用。
 
 \subsection{定义与性质}
 
 Householder矩阵（或称Householder变换矩阵）是具有如下形式的矩阵：
 $$P=I-\frac{2}{v^Tv}vv^T,\quad 0\neq v \in \mathbb{R}^n$$
+
 显然$P$为对称矩阵。另一方面，由
 \begin{align*}
 P^2&=I-\frac{4}{v^Tv}vv^T+\frac{4}{(v^Tv)^2}vv^Tvv^T\\&=I-\frac{4}{v^Tv}vv^T+\frac{4}{(v^Tv)^2}v(v^Tv)v^T=I
 \end{align*}
+
 结合其对称性易知$P$为正交矩阵。
 
 \subsection{Householder变换}
 
-考虑方程$Px=y$，且满足$||x||_2=||y||_2$。设$P$为Householder矩阵，该方程可化为：$$x-2(\frac{v^Tx}{v^Tv})v=y$$
+考虑方程$Px=y$。其中$x,y$为常数，满足$||x||_2=||y||_2$，我们需要求解满足方程的矩阵$P$。在这里我们令$P$为Householder矩阵，该方程可化为：$$x-2(\frac{v^Tx}{v^Tv})v=y$$
 
 令$v=x-y$，易得$$v^Tv=x^Tx+y^Ty-2x^Ty$$
 
@@ -254,7 +274,7 @@ $$P_k=\left[\begin{matrix}I_{k-1}&0\\0&\widetilde{P_k}\\\end{matrix}\right]$$
 
 结合第2.1.2节的结论，重复该迭代操作即可逐步完成全矩阵的QR分解。
 
-在实际计算中，通常避免显式构建完整的因式矩阵$P_k$，而是利用关系式$\widetilde{P_k}C_k=C_k-\frac{2}{v^Tv}v(v^TC_k)$直接更新后继矩阵。因此，稳定性分析的中心点可以归结为考察向量$v$计算的浮点精度。
+在实际计算中，通常避免显式构建完整的因式矩阵$P_k$，而是利用关系式$\widetilde{P_k}C_k=C_k-\frac{2}{v^Tv}v(v^TC_k)$直接更新后继矩阵。因此，稳定性分析的中心点可以归结为考察向量$v$计算的精度。
 
 \section{浮点计算}
 
@@ -288,11 +308,15 @@ $$2^5\times1.001111\approx2^5\times1.0100=40$$
 设$x,\ y\in\mathbb{R}$，记$op\in\{+,-,\times,/\}$为基本浮点运算符号。一次标准浮点运算的计算结果可表示为：
 $$fl(x\ op\ y)=(x\ op\ y)(1+\delta),\quad |\delta|\le u$$
 
-其中$fl(\cdot)$表示机器系统内的浮点算术实现，$\delta$为该次运算产生的相对舍入误差，$u$称为机器精度（machine epsilon），是一个完全由硬件存储精度决定的正常数。
+其中$fl(\cdot)$表示机器系统内的浮点算术实现，$\delta$为该次运算产生的相对舍入误差，$u$称为机器精度，是一个完全由硬件存储精度决定的正常数。
 
 需要注意的是，某些特定的基础操作（如取相反数、与零相加）不涉及尾数的舍入截断，从而不会引入舍入误差。
 
 该模型的优势在于，它能够将一次浮点运算产生的误差统一表示为一个有界的相对扰动，从而使复杂算法中的误差传播分析可以转化为对多个扰动项的组合估计。相比直接分析底层二进制表示，该模型在保留主要误差特征的同时，大幅降低了理论分析的复杂度。此外，该模型中的误差界仅依赖于机器精度，而与具体运算数值无关，因此分析得到的结果对输入是鲁棒的。在后续证明中，本文将反复利用该模型对连续浮点运算中的误差进行估计，并给出误差的上界。
+
+\chapter{Lean基础}
+
+
 
 \chapter{Householder法的误差估计}
 
@@ -301,28 +325,36 @@ $$fl(x\ op\ y)=(x\ op\ y)(1+\delta),\quad |\delta|\le u$$
 \section{记号}
 
 \begin{definition}
-  浮点计算精度u
+  浮点计算系统的精度
 \end{definition}
 \begin{leancode}
-variable (u : NNReal)
+  variable (u : NNReal)
 \end{leancode}
+
 浮点误差模型部分和上一章中定义相同，不再赘述。
 
 \begin{definition}
   浮点误差阶数
 \end{definition}
 \begin{leancode}
-def γ (n : ℕ) : ℝ := (n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ))
+  def γ (n : ℕ) : ℝ := (n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ))
 \end{leancode}
-记作$\gamma_n=nu/(1-nu)$。文献中为简化常数讨论，引入了$\widetilde{\gamma_n}=\gamma_{cn}$。本文在相关推导中已将常数$c$显式处理，因此不再引入该参数。
+
+记$\gamma_n=nu/(1-nu)$。
 
 对于给定的浮点运算序列，记：
 $$|\theta_n|\le\gamma_n,\quad\theta_n\in\mathbb{R}$$
+
 其表示该运算序列中可能引入的累积相对误差界。下文中所有的$\theta$变量均默认满足此有界性条件。
 
 \begin{definition}
   符号函数
 \end{definition}
+\begin{leancode}
+  def sign {n : ℕ} (x : Vec n) (hn : n ≠ 0) : ℝ :=
+    if x ⟨0, Nat.pos_of_ne_zero hn⟩ < 0 then -1 else 1
+\end{leancode}
+
 约定：
 $$
 \sign(x)=
@@ -345,10 +377,11 @@ $$
   浮点误差阶数的可加性
 \end{theorem}
 \begin{leancode}
-lemma gamma_mul_le (n₁ n₂ : ℕ) 
-  (hnu : ((n₁ + n₂) : ℝ) * (u : ℝ) < 1) :
-    (γ u n₁ + 1) * (γ u n₂ + 1) ≤ γ u (n₁ + n₂) + 1
+  lemma gamma_mul_le (n₁ n₂ : ℕ) 
+    (hnu : ((n₁ + n₂) : ℝ) * (u : ℝ) < 1) :
+      (γ u n₁ + 1) * (γ u n₂ + 1) ≤ γ u (n₁ + n₂) + 1
 \end{leancode}
+
 即$n_1$阶和$n_2$阶的误差相叠加后，总误差不超过$n_1+n_2$阶。
 \begin{proof}
   展开定义可知，该命题等价于证明
@@ -360,34 +393,37 @@ lemma gamma_mul_le (n₁ n₂ : ℕ)
   误差界
 \end{definition}
 \begin{leancode}
-def diff_gamma_bound (n : ℕ) (x x' : ℝ) : Prop :=
-  |x - x'| ≤ γ u n * |x|
-def diff_gamma_bound_theta (n : ℕ) (x x' : ℝ) : Prop :=
-  ∃ θ : ℝ, x' = x * (1 + θ) ∧ |θ| ≤ γ u n
+  def diff_gamma_bound (n : ℕ) (x x' : ℝ) : Prop :=
+    |x - x'| ≤ γ u n * |x|
+  def diff_gamma_bound_theta (n : ℕ) (x x' : ℝ) : Prop :=
+    ∃ θ : ℝ, x' = x * (1 + θ) ∧ |θ| ≤ γ u n
 \end{leancode}
+
 为定量控制运算误差的阶数，此处定义了两个逻辑等价的判别谓词，用于描述计算结果$x'$落在真实值$x$的$\gamma_n$误差界内。第一个定义采用了绝对误差上限的形式。第二个定义是引入了中间变量$\theta$的等价形式，这种存在性论断在处理复杂的复合误差推导时更为简便。
 
 \begin{lemma}
   误差的保号性
 \end{lemma}
 \begin{leancode}
-lemma pos_diff_gamma_bound_pos (n : ℕ) (x x' : ℝ) 
-  (hnu : 2 * (n : ℝ) * (u : ℝ) < 1) (hx : x > 0) 
-  (hbound : diff_gamma_bound u n x x') :
-    x' > 0 
+  lemma pos_diff_gamma_bound_pos (n : ℕ) (x x' : ℝ) 
+    (hnu : 2 * (n : ℝ) * (u : ℝ) < 1) (hx : x > 0) 
+    (hbound : diff_gamma_bound u n x x') :
+      x' > 0 
 \end{leancode}
+
 该命题表明，当浮点计算的相对误差界满足$\gamma_n<1$时，舍入累积带来的误差不足以改变真实计算结果的正负号。
 
 \begin{theorem}
   误差的传递性
 \end{theorem}
 \begin{leancode}
-theorem diff_gamma_bound_trans (n₁ n₂ : ℕ) (x x' x'' : ℝ) 
-  (hnu : ((n₁ + n₂) : ℝ) * (u : ℝ) < 1) 
-  (hbound₁ : diff_gamma_bound u n₁ x x') 
-  (hbound₂ : diff_gamma_bound u n₂ x' x'') :
-    diff_gamma_bound u (n₁ + n₂) x x'' 
+  theorem diff_gamma_bound_trans (n₁ n₂ : ℕ) (x x' x'' : ℝ) 
+    (hnu : ((n₁ + n₂) : ℝ) * (u : ℝ) < 1) 
+    (hbound₁ : diff_gamma_bound u n₁ x x') 
+    (hbound₂ : diff_gamma_bound u n₂ x' x'') :
+      diff_gamma_bound u (n₁ + n₂) x x'' 
 \end{leancode}
+
 该定理为定理~\ref{thm:gamma-mul-le}的应用。若真实值$x$经由一次运算得到具有$n_1$阶误差界的近似值$x'$，该近似值再经由一次具有$n_2$阶误差界的运算得到结果$x''$，则$x''$相对于真实值$x$的总误差域在$n_1+n_2$阶内。
 
 这说明误差阶数满足可加性，并保证了在复合运算中误差界的传递性。
@@ -397,14 +433,15 @@ theorem diff_gamma_bound_trans (n₁ n₂ : ℕ) (x x' x'' : ℝ)
   加法运算误差的界
 \end{theorem}
 \begin{leancode}
-lemma add_bound_nonneg
-  (nx ny : ℕ) (x y x' y' : ℝ)
-  (hx : x ≥ 0) (hy : y ≥ 0)
-  (hnu : ((nx ⊔ ny) : ℝ) * (u : ℝ) < 1)
-  (hboundx : diff_gamma_bound u nx x x')
-  (hboundy : diff_gamma_bound u ny y y') :
-    diff_gamma_bound u (nx ⊔ ny) (x + y) (x' + y')
+  lemma add_bound_nonneg
+    (nx ny : ℕ) (x y x' y' : ℝ)
+    (hx : x ≥ 0) (hy : y ≥ 0)
+    (hnu : ((nx ⊔ ny) : ℝ) * (u : ℝ) < 1)
+    (hboundx : diff_gamma_bound u nx x x')
+    (hboundy : diff_gamma_bound u ny y y') :
+      diff_gamma_bound u (nx ⊔ ny) (x + y) (x' + y')
 \end{leancode}
+
 已知参数$x, y\ge 0$，在$x'=(1+\theta_{n_x})x$及$y'=(1+\theta_{n_y})y$成立的前提下，加法运算结果$x'+y'$的总误差上限将由两运算数误差阶数$n_x, n_y$中较高的者所控制。
 \begin{proof}
   由定义可知
@@ -422,13 +459,14 @@ lemma add_bound_nonneg
   乘法运算误差的界
 \end{theorem}
 \begin{leancode}
-lemma mul_bound
-  (nx ny : ℕ) (x y x' y' : ℝ)
-  (hnu : ((nx + ny) : ℝ) * (u : ℝ) < 1)
-  (hboundx : diff_gamma_bound u nx x x')
-  (hboundy : diff_gamma_bound u ny y y') :
-    diff_gamma_bound u (nx + ny) (x * y) (x' * y')
+  lemma mul_bound
+    (nx ny : ℕ) (x y x' y' : ℝ)
+    (hnu : ((nx + ny) : ℝ) * (u : ℝ) < 1)
+    (hboundx : diff_gamma_bound u nx x x')
+    (hboundy : diff_gamma_bound u ny y y') :
+      diff_gamma_bound u (nx + ny) (x * y) (x' * y')
 \end{leancode}
+
 对于乘法运算，若$x'=(1+\theta_{n_x})x$且$y'=(1+\theta_{n_y})y$，则乘积项$x'y'$的复合误差最终受到真实值$xy$的$n_x+n_y$阶误差界约束。
 \begin{proof}
   由定义可知
@@ -445,57 +483,62 @@ lemma mul_bound
   浮点误差
 \end{definition}
 \begin{leancode}
-def fl (x x' : ℝ) : Prop :=
-  ∃ δ : ℝ, |δ| ≤ (u : ℝ) ∧ x * (1 + δ) = x'
+  def fl (x x' : ℝ) : Prop :=
+    ∃ δ : ℝ, |δ| ≤ (u : ℝ) ∧ x * (1 + δ) = x'
 \end{leancode}
+
 对于单次基本的浮点运算，其计算结果$x'$与真实结果$x$之间的关系定义为：存在误差参数$\delta$使得$x' = x(1+\delta)$且$|\delta|\le u$。这表明计算结果的相对偏差受到机器精度$u$的控制。
 
 \begin{lemma}
   浮点误差界与$\gamma$误差界的关系
 \end{lemma}
 \begin{leancode}
-lemma fl_to_gamma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
-  fl u x x' → diff_gamma_bound u 1 x x'
+  lemma fl_to_gamma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
+    fl u x x' → diff_gamma_bound u 1 x x'
 \end{leancode}
+
 易知由于前提满足$\gamma_1 > u$，单次基本浮点运算产生的误差可直接被$\gamma_1$误差界控制。
 
 \begin{definition}
   向量的浮点误差界
 \end{definition}
 \begin{leancode}
-def diff_gamma_bound_vec (n : ℕ) {m : ℕ} (x : Vec m) (x' : Vec m) : 
-  Prop := ∀ i, diff_gamma_bound u n (x i) (x' i)
+  def diff_gamma_bound_vec (n : ℕ) {m : ℕ} (x : Vec m) (x' : Vec m) : 
+    Prop := ∀ i, diff_gamma_bound u n (x i) (x' i)
 \end{leancode}
+
 该定义表明，向量整体落在$n$阶误差界内等价于其内部每一个分量的误差均受到$n$阶误差界的限制。
 
 \begin{definition}
   基础运算的浮点误差界
 \end{definition}
 \begin{leancode}
-def fl_add (x y z : ℝ) : Prop :=
-  fl u (x + y) z
-def fl_mul (x y z : ℝ) : Prop :=
-  fl u (x * y) z
-def fl_smul_vec (a : ℝ)
-  (x : Vec n) (y : Vec n) : Prop :=
-    ∀ i, fl u (a * x i) (y i)
+  def fl_add (x y z : ℝ) : Prop :=
+    fl u (x + y) z
+  def fl_mul (x y z : ℝ) : Prop :=
+    fl u (x * y) z
+  def fl_smul_vec (a : ℝ)
+    (x : Vec n) (y : Vec n) : Prop :=
+      ∀ i, fl u (a * x i) (y i)
 \end{leancode}
+
 上述代码分别定义了加法、乘法及向量数乘运算的浮点实现。其核心条件为每一次运算的操作结果均被约束在真实结果的精度$u$的单次浮点误差界以内。
 
 \begin{definition}
   带误差的向量点乘
 \end{definition}
 \begin{leancode}
-def fl_vec_dot : {n : ℕ} → Vec n → Vec n → ℝ → Prop
-  | 0, _, _, z => z = 0
-  | n + 1, x, y, z =>
-    ∃ p s : ℝ,
-      fl_mul u (x 0) (y 0) p ∧
-      fl_vec_dot
-      (fun i => x (Fin.succ i))
-      (fun i => y (Fin.succ i)) s ∧
-      fl_add u p s z
+  def fl_vec_dot : {n : ℕ} → Vec n → Vec n → ℝ → Prop
+    | 0, _, _, z => z = 0
+    | n + 1, x, y, z =>
+      ∃ p s : ℝ,
+        fl_mul u (x 0) (y 0) p ∧
+        fl_vec_dot
+        (fun i => x (Fin.succ i))
+        (fun i => y (Fin.succ i)) s ∧
+        fl_add u p s z
 \end{leancode}
+
 定义了带误差的向量点乘。我们递归地定义这个过程：当$n=0$时，点乘结果为$0$；当$n>0$时，先计算一个分量的乘积$p$，再递归计算剩余分量的点乘结果$s$，最后将两者相加得到最终结果$z$。每一步运算均满足一次浮点误差界。
 
 需要注意的是，为了简化形式化证明的结构，上述定义在$n=1$时包含了额外的计算$x_1y_1+0$，且未假设该次加法的误差为零。这使得向量内积误差的上界由理论上的$n$阶放宽至$n+1$阶，但该放宽对整体结论的影响较小。
@@ -505,13 +548,14 @@ def fl_vec_dot : {n : ℕ} → Vec n → Vec n → ℝ → Prop
   向量自内积误差的界
 \end{theorem}
 \begin{leancode}
-theorem fl_vec_dot_bound
-  (n : ℕ)
-  (hnu : ((n : ℝ) + 1) * (u : ℝ) < 1)
-  (x : Vec n) (z : ℝ)
-  (hfl : fl_vec_dot u x x z) :
-    diff_gamma_bound u (n + 1) (x ⬝ x) z 
+  theorem fl_vec_dot_bound
+    (n : ℕ)
+    (hnu : ((n : ℝ) + 1) * (u : ℝ) < 1)
+    (x : Vec n) (z : ℝ)
+    (hfl : fl_vec_dot u x x z) :
+      diff_gamma_bound u (n + 1) (x ⬝ x) z 
 \end{leancode}
+
 该定理表明，向量与其自身内积的计算结果满足$n+1$阶误差界。与参考文献第3.1节中关于一般向量内积的普遍结论不同，形式化证明中仅需处理向量与自身的内积。这一条件避免了绝对值不等式的放缩，从而可以直接获得针对计算结果的误差界。
 \begin{proof}
   记$s_i=\sum_{k=1}^i x_kx_k$，由浮点运算定义得：
@@ -534,11 +578,12 @@ theorem fl_vec_dot_bound
   误差界受开方运算的影响
 \end{lemma}
 \begin{leancode}
-lemma sqrt_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x ≥ 0)
-  (hnu : 2 * (n : ℝ) * (u : ℝ) < 1) 
-  (h_bound : diff_gamma_bound u n x x') :
-    diff_gamma_bound u n (Real.sqrt x) (Real.sqrt x') 
+  lemma sqrt_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x ≥ 0)
+    (hnu : 2 * (n : ℝ) * (u : ℝ) < 1) 
+    (h_bound : diff_gamma_bound u n x x') :
+      diff_gamma_bound u n (Real.sqrt x) (Real.sqrt x') 
 \end{leancode}
+
 对于非负实数$x$，若其计算值$x'$满足$n$阶误差界约束（即$x'=x(1+\theta_n)$），则开方结果$\sqrt{x'}$仍满足关于$\sqrt{x}$的$n$阶误差界。为保持公式一致性并简化形式化证明框架，此处未将理论上界缩紧至$n/2$阶，而是继续使用$n$阶作为上界。
 
 \begin{lemma}
@@ -546,11 +591,12 @@ lemma sqrt_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x ≥ 0)
   误差界受取倒数运算的影响
 \end{lemma}
 \begin{leancode}
-lemma div_inv_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x > 0)
-  (hnu : 2 * (n : ℝ) * (u : ℝ) < 1)
-  (h_bound : diff_gamma_bound u n x x') :
-    diff_gamma_bound u (2 * n) (1 / x) (1 / x') 
+  lemma div_inv_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x > 0)
+    (hnu : 2 * (n : ℝ) * (u : ℝ) < 1)
+    (h_bound : diff_gamma_bound u n x x') :
+      diff_gamma_bound u (2 * n) (1 / x) (1 / x') 
 \end{leancode}
+
 对于正实数$x$，若计算值$x'$满足$n$阶误差界，则其倒数$1/x'$满足关于$1/x$的$2n$阶误差界。
 
 在经典数值分析中，通常在假定精度$u$足够小的前提下使用近似等式$1/(1+\theta_n)\approx 1-\theta_n$，得出误差不扩大的结论。但在严谨的逻辑下，$1/(1-\gamma_n)\le 1+\gamma_n$并不恒成立。因此为了保证定理的绝对严谨，我们需将倒数运算引起的误差控制范围放宽至$2n$阶。
@@ -627,48 +673,50 @@ v = b v'
 \right.
 $$
 \begin{leancode}
-structure Householder (n : ℕ) (hn : n ≠ 0) where
-  l' : ℝ
-  l : ℝ
-  s : ℝ
-  v0 : ℝ
-  v' : Vec n
-  p : ℝ
-  β : ℝ
-  b : ℝ
-  v : Vec n
+  structure Householder (n : ℕ) (hn : n ≠ 0) where
+    l' : ℝ
+    l : ℝ
+    s : ℝ
+    v0 : ℝ
+    v' : Vec n
+    p : ℝ
+    β : ℝ
+    b : ℝ
+    v : Vec n
 
-def householder (n : ℕ) (x : Vec n) (hn : n ≠ 0) :
-  Householder n hn := by
-  let i₀ : Fin n := ⟨0, Nat.pos_of_ne_zero hn⟩
-  let l' := x ⬝ x
-  let l := Real.sqrt l'
-  let s := sign x hn * l
-  let v0 := x i₀ + s
-  let p := s * v0
-  let β := 1 / p
-  let b := Real.sqrt β
-  let v' : Vec n := fun i => if i = i₀ then v0 else x i
-  let v := b • v'
-  exact {l' := l', l := l, s := s, v0 := v0,
-    v' := v', p := p, β := β, b := b, v := v
-  }
+  def householder (n : ℕ) (x : Vec n) (hn : n ≠ 0) :
+    Householder n hn := by
+      let i₀ : Fin n := ⟨0, Nat.pos_of_ne_zero hn⟩
+      let l' := x ⬝ x
+      let l := Real.sqrt l'
+      let s := sign x hn * l
+      let v0 := x i₀ + s
+      let p := s * v0
+      let β := 1 / p
+      let b := Real.sqrt β
+      let v' : Vec n := fun i => if i = i₀ then v0 else x i
+      let v := b • v'
+      exact {l' := l', l := l, s := s, v0 := v0,
+        v' := v', p := p, β := β, b := b, v := v
+      }
 \end{leancode}
+
 % 这里leancode里面let l' := x ⬝ x一行其实应该是let l' := x ⬝ᵥ x, 渲染不出来就把这个v去掉了
 
 \begin{theorem}
   Householder算法的正确性
 \end{theorem}
 \begin{leancode}
-theorem e₁_of_householder
-  (n : ℕ)
-  (x : Vec n)
-  (hn : n ≠ 0)
-  (hx : x ≠ 0) :
-    let hv := householder n x hn
-    let P := 1 - (vecMulVec hv.v hv.v)
-      P • x = e₁ n x hn
+  theorem e₁_of_householder
+    (n : ℕ)
+    (x : Vec n)
+    (hn : n ≠ 0)
+    (hx : x ≠ 0) :
+      let hv := householder n x hn
+      let P := 1 - (vecMulVec hv.v hv.v)
+        P • x = e₁ n x hn
 \end{leancode}
+
 \begin{proof}
 反复代入可知
 $$
@@ -711,87 +759,90 @@ $$
   带误差的Householder过程
 \end{definition}
 \begin{leancode}
-def fl_householder (n : ℕ) (x : Vec n) (hn : n ≠ 0)
-  (hv_fl : Householder n hn) : Prop :=
-    -- (1) l' = fl(xTx)
-    fl_vec_dot u x x hv_fl.l' ∧
-    -- (2) l = fl(sqrt(l'))
-    fl u (Real.sqrt hv_fl.l') hv_fl.l ∧
-    hv_fl.s = sign x hn * hv_fl.l ∧
-    -- (3) v₀ = fl(x₀ + s)
-    fl_add u (x ⟨0, Nat.pos_of_ne_zero hn⟩) hv_fl.s hv_fl.v0 ∧
-    -- (4) p = fl(s * v₀)
-    fl_mul u hv_fl.s hv_fl.v0 hv_fl.p ∧
-    -- (5) β = fl(1 / p)
-    fl u (1 / hv_fl.p) hv_fl.β ∧
-    -- (6) b = fl(√β)
-    fl u (Real.sqrt hv_fl.β) hv_fl.b ∧
-    -- (7) v = fl(b • v')
-    hv_fl.v' = (fun i => if i = ⟨0, Nat.pos_of_ne_zero hn⟩ 
-                          then hv_fl.v0 
-                          else (x i)) ∧
-    fl_smul_vec u hv_fl.b hv_fl.v' hv_fl.v
+  def fl_householder (n : ℕ) (x : Vec n) (hn : n ≠ 0)
+    (hv_fl : Householder n hn) : Prop :=
+      -- (1) l' = fl(xTx)
+      fl_vec_dot u x x hv_fl.l' ∧
+      -- (2) l = fl(sqrt(l'))
+      fl u (Real.sqrt hv_fl.l') hv_fl.l ∧
+      hv_fl.s = sign x hn * hv_fl.l ∧
+      -- (3) v₀ = fl(x₀ + s)
+      fl_add u (x ⟨0, Nat.pos_of_ne_zero hn⟩) hv_fl.s hv_fl.v0 ∧
+      -- (4) p = fl(s * v₀)
+      fl_mul u hv_fl.s hv_fl.v0 hv_fl.p ∧
+      -- (5) β = fl(1 / p)
+      fl u (1 / hv_fl.p) hv_fl.β ∧
+      -- (6) b = fl(√β)
+      fl u (Real.sqrt hv_fl.β) hv_fl.b ∧
+      -- (7) v = fl(b • v')
+      hv_fl.v' = (fun i => if i = ⟨0, Nat.pos_of_ne_zero hn⟩ 
+                            then hv_fl.v0 
+                            else (x i)) ∧
+      fl_smul_vec u hv_fl.b hv_fl.v' hv_fl.v
 \end{leancode}
+
 上述代码以相继传递的中间变量形式，构建了考虑浮点误差扰动的Householder计算序列模型。在此链式结构中，每层衍生变量均须满足基于其直接前驱量的单次运算浮点误差。接下来的证明中，将逐层追踪误差在公式链中的放大特征，最终界定总体输出误差。
 
 \begin{theorem}
   Householder算法误差的界（对应参考文献中的引理19.1）
 \end{theorem}
 \begin{leancode}
-theorem Lemma_19_1 (n : ℕ) (x : Vec n) 
-  (hn : n ≠ 0) (hx : x ≠ 0) 
-  (hv_fl : Householder n hn) 
-  (hnu : (8 * n + 26 : ℝ) * (u : ℝ) < 1) 
-  (hfl : fl_householder u n x hn hv_fl) :
-    diff_gamma_bound_vec u (5 * n + 18)
-    (householder n x hn).v hv_fl.v
+  theorem Lemma_19_1 (n : ℕ) (x : Vec n) 
+    (hn : n ≠ 0) (hx : x ≠ 0) 
+    (hv_fl : Householder n hn) 
+    (hnu : (8 * n + 26 : ℝ) * (u : ℝ) < 1) 
+    (hfl : fl_householder u n x hn hv_fl) :
+      diff_gamma_bound_vec u (5 * n + 18)
+      (householder n x hn).v hv_fl.v
 \end{leancode}
+
 该引理证明了对于输出向量各分量均存在$\theta_i$满足：在误差界$|\theta_i|\le\gamma_{5n+18}$条件下取得$\hat{v_i}=v_i(1+\theta_i)$（$1\le i\le n$）。 
 
 \begin{proof}
-此处按计算顺序分步证明各步的具体累积误差界。作为参照基础，先行实例化不含浮点波动的精确过程变量结构\textsf{hv}：
+此处按计算顺序分步证明各步的具体累积误差界。作为参照基础，先行实例化不含浮点波动的精确过程变量结构\lean{hv}：
 \begin{leancode}
   let hv := householder n x hn
 \end{leancode}
 
 基于$l'$的定义与定理~\ref{thm:fl-vec-dot-bound}，得到：
 \begin{leancode}
-have l'_bound : diff_gamma_bound u (n + 1) hv.l' hv_fl.l'
+  have l'_bound : diff_gamma_bound u (n + 1) hv.l' hv_fl.l'
 \end{leancode}
 
 由引理~\ref{lem:sqrt-bound}，开方运算不放大输入误差的上界。叠加本次浮点开方运算引入的一次误差，得到变量$l$的误差界：
 \begin{leancode}
-have l_bound : diff_gamma_bound u (n + 2) hv.l hv_fl.l
+  have l_bound : diff_gamma_bound u (n + 2) hv.l hv_fl.l
 \end{leancode}
 
 由于符号函数取值仅为$1$或$-1$，不引入额外浮点误差，因此$s$的误差界与$l$相同：
 \begin{leancode}
-have s_bound : diff_gamma_bound u (n + 2) hv.s hv_fl.s
+  have s_bound : diff_gamma_bound u (n + 2) hv.s hv_fl.s
 \end{leancode}
 
 由$s$的定义可知，$s$与$x_1$同号。依据定理~\ref{thm:add-bound-nonneg}，同号相加的误差界由操作数的最大误差界决定。加上本次浮点加法的误差，得到$v_0$的误差界：
 \begin{leancode}
-have v0_bound : diff_gamma_bound u (n + 3) hv.v0 hv_fl.v0
+  have v0_bound : diff_gamma_bound u (n + 3) hv.v0 hv_fl.v0
 \end{leancode}
 
 由上文，变量$s$有$n+2$阶界，变量$v_0$有$n+3$阶界。依据定理~\ref{thm:mul-bound}，乘积$s\cdot v_0$有$2n+5$阶界。加上本次浮点乘法操作的误差，得到变量$p$的界：
 \begin{leancode}
-have p_bound : diff_gamma_bound u (2 * n + 6) hv.p hv_fl.p
+  have p_bound : diff_gamma_bound u (2 * n + 6) hv.p hv_fl.p
 \end{leancode}
 
 由引理~\ref{lem:inv-bound}，取倒数后误差阶数翻倍，得出倒数$1/p$的误差界：
 \begin{leancode}
-have p_bound' : diff_gamma_bound u (4 * n + 12) (1 / hv.p) (1 / hv_fl.p)
+  have p_bound' : diff_gamma_bound u (4 * n + 12)
+                  (1 / hv.p) (1 / hv_fl.p)
 \end{leancode}
 
 因$\hat{\beta}=fl(\frac{1}{\hat{p}})$，增加一次浮点赋值误差，得到$\beta$的界：
 \begin{leancode}
-have β_bound : diff_gamma_bound u (4 * n + 13) hv.β hv_fl.β
+  have β_bound : diff_gamma_bound u (4 * n + 13) hv.β hv_fl.β
 \end{leancode}
 
 与计算$l$的步骤相似，开根运算不放大误差阶数。叠加本次开根号的浮点误差后，得到变量$b$的界：
 \begin{leancode}
-have b_bound : diff_gamma_bound u (4 * n + 14) hv.b hv_fl.b
+  have b_bound : diff_gamma_bound u (4 * n + 14) hv.b hv_fl.b
 \end{leancode}
 
 最后计算输出向量的分量误差。对于首位以外的分量$i>1$，由式$\hat{v_i}=fl(\hat{b}\cdot x_i)$及乘法定理~\ref{thm:mul-bound}，由于$x_i$为精确常量，$\hat{v_i}$的误差界为$4n+15$阶。对于首位分量，$\hat{v_1}=fl(\hat{b}\cdot\hat{v_0})$，由于$\hat{v_0}$带有$n+3$阶误差，故由乘法定理知$\hat{v_1}$的误差界为$5n+18$阶。为统一定义，取各个分量的最大误差界，即最终输出向量的所有分量均被$5n+18$阶常数界控制。
