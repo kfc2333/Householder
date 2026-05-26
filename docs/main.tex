@@ -194,7 +194,7 @@ Householder变换是实现QR分解的重要方法。与经典Gram-Schmidt正交�
 
 \section{研究内容}
 
-本文围绕 Householder 变换的数值稳定性问题展开研究，并基于Lean定理证明系统对相关结论进行形式化验证。研究的核心问题是：在浮点误差模型下，Householder 变换中关键向量的计算结果是否能够保持足够小的相对误差，以及如何以形式化方式严格证明该性质。
+本文围绕Householder变换的数值稳定性问题展开研究，并基于Lean定理证明系统对相关结论进行形式化验证。研究的核心问题是：在浮点误差模型下，Householder变换中关键向量的计算结果是否能够保持足够小的相对误差，以及如何以形式化方式严格证明该性质。
 
 为此，本文首先对Householder变换的数学定义及其稳定性理论进行了分析，并建立相应的浮点误差模型。在此基础上，使用Lean对相关数学对象、误差界以及稳定性定理进行形式化表示与证明。本文进一步给出了误差界中的具体常数，从而使稳定性结论具有更明确的量化形式。这表明形式化方法不仅能够验证已有理论结果，还能够补全传统分析中省略的隐式前提与证明步骤。
 
@@ -797,6 +797,28 @@ have b_bound : diff_gamma_bound u (4 * n + 14) hv.b hv_fl.b
 最后计算输出向量的分量误差。对于首位以外的分量$i>1$，由式$\hat{v_i}=fl(\hat{b}\cdot x_i)$及乘法定理~\ref{thm:mul-bound}，由于$x_i$为精确常量，$\hat{v_i}$的误差界为$4n+15$阶。对于首位分量，$\hat{v_1}=fl(\hat{b}\cdot\hat{v_0})$，由于$\hat{v_0}$带有$n+3$阶误差，故由乘法定理知$\hat{v_1}$的误差界为$5n+18$阶。为统一定义，取各个分量的最大误差界，即最终输出向量的所有分量均被$5n+18$阶常数界控制。
 \end{proof}
 
+\chapter{总结}
+
+\section{工作总结}
+
+本文基于Lean 4交互式定理证明器，对数值计算中经典的Householder变换的数值稳定性进行了形式化验证。全文的主要工作与贡献可总结为以下三个方面：
+
+首先，梳理了浮点数相对误差的标准模型，并在 Lean 4 中严格定义了一系列基础运算的浮点误差界（即$\gamma_n$误差界）。通过将误差控制过程抽象为形式化的引理和定理，验证了误差的可加性、保号性、传递性以及基本四则运算的误差传递规律，为复杂的数值算法分析奠定了理论基础。
+
+其次，针对Higham在\textit{Accuracy and Stability of Numerical Algorithms}一书中给出的Householder算法误差分析过程（引理19.1），进行了完整的形式化重构。在证明推导中，我们利用机器证明系统的严密性，发现并修补了部分在传统纸笔证明中依赖于“误差近似”或“常规假设”的逻辑间隙。例如，在取倒数运算中，将误差界适当地由$n$阶放宽至$2n$阶，以满足形式化逻辑体系的全域成立条件；在向量自内积中，明确了首项附加加法所带来的阶数放宽。最终，我们严格证明了带误差的Householder过程所输出的向量分量统一受控于$5n+18$阶的综合误差界，确切地用机器形式化证明肯定了该经典算法的数值稳定性。
+
+最后，本文的实践展示了交互式定理证明器在数值线性代数领域的应用潜力。形式化验证不仅能够发现和规避传统推导中的隐蔽预设，更为开发高可靠性、高精度的数值计算软件库提供了纯粹的理论证明背书。
+
+\section{未来展望}
+
+形式化数值分析是一个极具挑战但充满应用前景的领域。尽管本文已完成了Householder变换基本过程的误差分析，但受限于篇幅，仍有许多值得继续拓展的方向：
+
+其一，本文主要聚焦于单次Householder变换的误差界限估计。在未来的研究中，可将此工作向后延伸，完成对完整QR分解算法乃至SVD等复合并行矩阵算法的形式化误差分析。
+
+其二，目前定义的误差界为了保证系统证明的可组合性与顺畅性，在某些运算环节（如开方、倒数运算等）采用了相对保守的放缩策略。随着数值形式化理论库的不断完善，未来有望引入更精细的分析工具与阶数约束结构，从而推导出更加紧凑且贴近实际硬件舍入表现的误差上界。
+
+其三，本文所构建的浮点运算模型和各类误差传递引理可进一步通用化与模块化，争取在未来为Mathlib4等主流开源数学库的数值分析分支补充基础定理，为广泛的机器形式化数值计算生态贡献代码与成果。
+
 \chapter*{参考文献}
 \addcontentsline{toc}{chapter}{参考文献}
 
@@ -806,9 +828,29 @@ have b_bound : diff_gamma_bound u (4 * n + 14) hv.b hv_fl.b
 
 [3] Lean and Mathlib4 Maintainer team. Documentation page for Mathlib4 and Lean, \url{https://leanprover-community.github.io/mathlib4_docs}
 
-
 \chapter*{附录}
 \addcontentsline{toc}{chapter}{附录}
+
+本文涉及的所有Lean 4形式化代码与\LaTeX 源码均已开源。使用的Lean 4工具链为\texttt{leanprover/lean4:v4.30.0-rc2}，项目代码库托管于GitHub，地址为：\url{https://github.com/kfc2333/Householder}。
+
+项目的主要文件内容与目录结构如下：
+\begin{itemize}
+    \item \texttt{QR/}目录：存放所有的Lean证明源码，包括：
+    \begin{itemize}
+      \item 基础误差模型定义（\texttt{Basic.lean}）
+      \item 精确Householder过程（\texttt{Householder.lean}）
+      \item 带误差界限的完整推导（\texttt{Householder\_fl.lean}）
+    \end{itemize}
+    \item \texttt{docs/}目录：存放本文档的排版源文件。
+\end{itemize}
+
+在本地编译运行本项目，建议首先安装Lean官方的环境管理工具\textsf{elan}，系统会自动读取工具链文件获取指定的 Lean 4 编译器。随后在项目根目录依次执行以下命令：
+\begin{verbatim}
+lake exe cache get
+lake build
+\end{verbatim}
+
+其中\texttt{cache get}命令用于拉取数学库依赖的预编译缓存。若\texttt{lake build}编译过程无错误输出，即代表全部证明均已通过Lean 4的形式化机器验证。
 
 \chapter*{致谢}
 \addcontentsline{toc}{chapter}{致谢}
