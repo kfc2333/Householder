@@ -1,10 +1,11 @@
-\documentclass[UTF8,a4paper,openany]{ctexbook}
+﻿\documentclass[UTF8,a4paper,openany]{ctexbook}
 \usepackage{pdfpages}
 \usepackage{indentfirst}
 \usepackage[hidelinks]{hyperref}
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{amsthm}
+\usepackage{enumitem}
 \DeclareMathOperator{\sign}{sign}
 \providecommand*{\theoremautorefname}{定理}
 
@@ -13,8 +14,8 @@
 \setmonofont{FreeMono}
 \usepackage{newunicodechar}
 \newfontfamily{\freeserif}{DejaVu Sans}
-\newunicodechar{✝}{\freeserif{✝}}
-\newunicodechar{𝓞}{\ensuremath{\mathcal{O}}}
+% \newunicodechar{✝}{\freeserif{✝}}
+% \newunicodechar{𝓞}{\ensuremath{\mathcal{O}}}
 \usepackage{xcolor}
 \usepackage{minted}
 \fvset{
@@ -41,6 +42,8 @@
 % 英文数字字体
 % \usepackage{fontspec}
 \setmainfont{Times New Roman}
+
+\setlist[itemize]{itemsep=0pt, topsep=0pt, parsep=0pt, partopsep=0pt}
 
 \newCJKfontfamily\qrthmchinese{SimHei}[AutoFakeBold=2]
 
@@ -316,7 +319,166 @@ $$fl(x\ op\ y)=(x\ op\ y)(1+\delta),\quad |\delta|\le u$$
 
 \chapter{Lean基础}
 
+本章将简要介绍阅读形式化代码所需的Lean 4基础知识。我们并不深入讨论Lean的类型系统和证明策略，而是聚焦于理解项目中代码的语法结构，包括变量与参数的定义、定理与引理的声明方式、函数的定义方法以及复合数据结构的封装形式。读者仅需具备最基本的编程概念（如函数、参数、类型）即可顺利阅读。
 
+\section{代码的基本结构}
+
+Lean中每一行代码都具有明确的类型。我们可以将每一个代码片段视作一个“声明”，它要么定义一个值或函数，要么声明一个待证明的性质。
+
+考虑如下最常见的模式——引理（lemma）或定理（theorem）的声明：
+
+\begin{leancode}
+  lemma add_zero (a : ℕ) : a + 0 = a
+\end{leancode}
+
+引理：给定一个自然数$a$，可以推出$a + 0 = a$。
+
+我们来分析其结构：
+
+\begin{itemize}
+  \item \lean{lemma} 或 \lean{theorem}：关键字，声明一条需要证明的命题。两者功能相同，\lean{lemma}通常用于辅助性的小结论，\lean{theorem}用于核心结论。
+  \item \lean{add_zero}：该引理的名称。
+  \item 括号内的部分如 \lean{(a : ℕ)} 称为显式参数。每个参数包含一个名字（如\lean{a}）和它的类型（如\lean{ℕ}，即自然数集）。在调用该引理时，必须提供参数的具体值。
+  \item 冒号后的部分\lean{a + 0 = a}称为该引理的结论，它本身是一个命题（Lean中记为\lean{Prop}），即\lean{a + 0 = a}这个陈述。
+\end{itemize}
+
+整体来看，\lean{add_zero}是一个以\lean{a}为输入、返回一个命题（此处为\lean{a + 0 = a}）的“函数”。如果提供了一个自然数类型的变量\lean{a}，我们就得到了这个命题的一个证明。
+
+有时参数会被大括号而非小括号扩起，如：
+
+\begin{leancode}
+  def identity {α : Type} (x : α) : α := x
+\end{leancode}
+
+这里的\lean{{α : Type}}是隐式参数。调用时通常不需要提供\lean{α}，Lean会自动从后续参数推断出\lean{α}（这里可以从\lean{x}的类型推断）。这个定义声明了一个恒等函数：对于任意类型\lean{α}，给定一个\lean{x}类型为\lean{α}，它原样返回\lean{x}。
+
+\section{变量（variable）}
+
+在Lean中，\lean{variable}用于声明一个在当前代码段中全局可用的变量，而不需要每次都在函数或定理的参数列表中重复写出。
+
+\begin{leancode}
+  variable (u : NNReal)
+\end{leancode}
+
+这声明了一个名为\lean{u}的变量，它的类型是\lean{NNReal}（即非负实数）。在这之后所有位于同一代码段内的定义、引理和定理都可以直接使用\lean{u}，而不必在每次声明时都将其作为参数列出。例如后面将会看到的\lean{γ}的定义和\lean{gamma_nonneg}引理中，\lean{u}都作为自由变量直接出现。在本项目中，\lean{u}代表机器精度，所有误差分析都以其为基础。
+
+\section{定义（def）}
+
+\lean{def}关键字用于定义一个新的常量或函数。根据定义的结果类型，它既可以定义一个计算用的函数，也可以定义一个描述性质的命题。
+
+\subsection{定义函数}
+
+以下是定义~\ref{def:gamma}~的代码，定义了一个函数\lean{γ}：
+
+\begin{leancode}
+  def γ (n : ℕ) : ℝ := (n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ))
+\end{leancode}
+
+我们来逐段分析：
+\begin{itemize}
+  \item \lean{def}：关键字，表示定义一个值或函数。
+  \item \lean{γ}：定义的函数的名称。
+  \item \lean{(n : ℕ)}：参数，\lean{n}的类型是自然数\lean{ℕ}。
+  \item \lean{: ℝ}：冒号后的\lean{ℝ}表示函数返回值类型是实数。
+  \item \lean{:=}：赋值符号，表示“定义为”。
+  \item 右侧为具体的表达式：\lean{(n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ))}。注意这里用\lean{(n : ℝ)}将自然数\lean{n}转换为实数，这是必要的，因为乘法和除法运算要求操作数类型一致。
+\end{itemize}
+
+这个定义直接对应本文中的记号$\gamma_n=\frac{nu}{1-nu}$，用于量化浮点运算的累积相对误差上界。
+
+再看向量的定义：
+
+\begin{leancode}
+  abbrev Vec (n : ℕ) := Fin n → ℝ
+\end{leancode}
+
+\lean{abbrev}是\lean{def}的一种变体，它定义了一个类型别名。\lean{Fin n}是包含\lean{n}个元素的有限类型（索引从\lean{0}开始），\lean{Fin n → ℝ}表示从$\{0,\ldots,n-1\}$到实数的函数，即一个维度为\lean{n}的实数向量。因此\lean{Vec n}就是“长度为\lean{n}的实数向量”这一类型的简写。
+
+\subsection{定义条件或关系}
+
+另一种常见的用法是用\lean{def}定义一个命题（即\lean{Prop}类型的值）。这类定义并不执行计算，而是描述一个条件或关系。我们考察定义~\ref{def:diff-gamma-bound}~的代码：
+
+\begin{leancode}
+  def diff_gamma_bound (n : ℕ) (x x' : ℝ) : Prop :=
+    |x - x'| ≤ γ u n * |x|
+\end{leancode}
+
+这里的关键区别在于返回类型是\lean{Prop}（命题）而非\lean{ℝ}。\lean{Prop}是Lean中所有命题的类型。右侧的\lean{|x - x'| ≤ γ u n * |x|}本身就是一个命题，它声明了\lean{x'}与\lean{x}的绝对误差不超过$\gamma_n$倍的\lean{|x|}。因此，\lean{diff_gamma_bound}是一个谓词：当给定\lean{n x x'}时，它表示“\lean{x'}相对于\lean{x}的误差满足\lean{n}阶误差界”这一性质。在使用时，和使用函数的定义相似，只需将参数提供在命题名称后面，即可得到一个命题。例如\lean{diff_gamma_bound u (n+1) hv.l' hv_fl.l'}就是一条具体的性质。
+
+类似的，考虑定义~\ref{def:fl}：
+
+\begin{leancode}
+  def fl (x x' : ℝ) : Prop :=
+    ∃ δ : ℝ, |δ| ≤ (u : ℝ) ∧ x * (1 + δ) = x'
+\end{leancode}
+
+\lean{∃ δ : ℝ, ...}是存在量词，意为“存在一个实数\lean{δ}，满足...”。\lean{∧}表示“且”。整个定义为：实数\lean{x'}是\lean{x}的一次浮点运算结果，即存在一个误差\lean{δ}满足\lean{|δ| ≤ u}且\lean{x' = x * (1 + δ)}。这正是上一章中描述的浮点误差模型。
+
+\section{结构体（structure）}
+
+\lean{structure}关键字用于将多个相关的数据打包成一个复合类型，类似于其他语言中的类的概念。本项目中使用了一个结构体来封装Householder计算过程中的所有中间变量：
+
+\begin{leancode}
+  structure Householder (n : ℕ) (hn : n ≠ 0) where
+    l' : ℝ
+    l : ℝ
+    s : ℝ
+    v0 : ℝ
+    v' : Vec n
+    p : ℝ
+    β : ℝ
+    b : ℝ
+    v : Vec n
+\end{leancode}
+
+这个结构体有两个参数：向量长度\lean{n}和一个证明\lean{hn}（\lean{n ≠ 0}，用于确保向量非空）。它包含$9$个字段，分别对应后文定义~\ref{def:householder}~中的$9$个变量。
+
+这些字段按计算顺序依次排列，每个字段的值依赖于前面的字段。结构体的作用是将所有这些变量打包为一个整体，方便在后续的引理和定理中统一引用而不必逐个传递。例如，后续定理中的参数\lean{(hv_fl : Householder n hn)}就代表一个包含了所有中间计算结果的“计算快照”。
+
+\section{函数}
+
+在Lean中，一切都是函数。参数、定义、甚至定理本身都可以视为函数。以定义~\ref{def:sign}~为例：
+
+\begin{leancode}
+  def sign {n : ℕ} (x : Vec n) (hn : n ≠ 0) : ℝ :=
+    if x ⟨0, Nat.pos_of_ne_zero hn⟩ < 0 then -1 else 1
+\end{leancode}
+
+这是一个典型的函数定义：
+\begin{itemize}
+  \item 一个隐式参数\lean{{n : ℕ}}表示向量长度。
+  \item 两个显式参数：\lean{(x : Vec n)}（输入向量）和\lean{(hn : n ≠ 0)}（即\lean{n}非零的条件，用于安全地访问向量的第一个元素）。
+  \item 返回值类型是\lean{ℝ}。
+  \item 函数体是 \lean{if x ⟨0, Nat.pos_of_ne_zero hn⟩ < 0 then -1 else 1}：如果向量的第一个分量\lean{x 0}小于\lean{0}则返回\lean{-1}，否则返回\lean{1}。
+\end{itemize}
+
+\section{类型转换}
+
+代码中频繁出现类似\lean{(n : ℝ)}的写法，这是Lean中的类型转换。我们重新来看\lean{γ}的定义：
+
+\begin{leancode}
+  def γ (n : ℕ) : ℝ := (n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ))
+\end{leancode}
+
+此处\lean{n}的类型是\lean{ℕ}（自然数），但乘法运算要求两个操作数同为实数，因此需要用\lean{(n : ℝ)}显式地将\lean{n}从自然数将类型转换为实数。
+
+类似地，条件\lean{(hnu : ((n₁ + n₂) : ℝ) * (u : ℝ) < 1)}中，\lean{((n₁ + n₂) : ℝ)}\\也是将自然数的和转换为实数。
+
+这种转换不会改变数值，仅改变类型信息。
+
+\section{小结}
+
+本章介绍了阅读本项目Lean代码所需的核心语法概念。总结如下：
+
+\begin{itemize}
+  \item \lean{variable}：声明一个全局变量（如机器精度\lean{u}），在同一代码段中无需反复声明。
+  \item \lean{def}：定义函数或性质。返回类型为\lean{Prop}时是定义了一个描述性的命题（谓词）；返回其他类型时是计算用的函数。
+  \item \lean{lemma}与\lean{theorem}：声明需要证明的命题。其参数分为显式参数（圆括号）和隐式参数（花括号），冒号后为结论。
+  \item \lean{structure}：将多个相关的数据字段打包为一个复合类型，便于整体传递。
+  \item 类型转换 \lean{(n : ℝ)}：将自然数\lean{n}显式转换为实数，以参与实数运算。
+\end{itemize}
+
+% 掌握了上述概念，读者便能够流畅地阅读本项目代码，并理解哪些是输入参数、哪些是需要证明的结论、哪些是中间计算变量，以及代码所表达的数学含义。
 
 \chapter{Householder法的误差估计}
 
@@ -334,6 +496,7 @@ $$fl(x\ op\ y)=(x\ op\ y)(1+\delta),\quad |\delta|\le u$$
 浮点误差模型部分和上一章中定义相同，不再赘述。
 
 \begin{definition}
+\label{def:gamma}
   浮点误差阶数
 \end{definition}
 \begin{leancode}
@@ -348,6 +511,7 @@ $$|\theta_n|\le\gamma_n,\quad\theta_n\in\mathbb{R}$$
 其表示该运算序列中可能引入的累积相对误差界。下文中所有的$\theta$变量均默认满足此有界性条件。
 
 \begin{definition}
+\label{def:sign}
   符号函数
 \end{definition}
 \begin{leancode}
@@ -372,10 +536,10 @@ $$
 
 本节将遵循源文件\textsf{Basic.lean}中的逻辑顺序，给出一系列浮点算术误差估计的基础结论，并证明后续推导所需的相关引理。
 
-\begin{theorem}
-\label{thm:gamma-mul-le}
+\begin{lemma}
+\label{lem:gamma-mul-le}
   浮点误差阶数的可加性
-\end{theorem}
+\end{lemma}
 \begin{leancode}
   lemma gamma_mul_le (n₁ n₂ : ℕ) 
     (hnu : ((n₁ + n₂) : ℝ) * (u : ℝ) < 1) :
@@ -390,6 +554,7 @@ $$
 \end{proof}
 
 \begin{definition}
+\label{def:diff-gamma-bound}
   误差界
 \end{definition}
 \begin{leancode}
@@ -414,6 +579,7 @@ $$
 该命题表明，当浮点计算的相对误差界满足$\gamma_n<1$时，舍入累积带来的误差不足以改变真实计算结果的正负号。
 
 \begin{theorem}
+\label{thm:diff-gamma-bound-trans}
   误差的传递性
 \end{theorem}
 \begin{leancode}
@@ -424,14 +590,14 @@ $$
       diff_gamma_bound u (n₁ + n₂) x x'' 
 \end{leancode}
 
-该定理为定理~\ref{thm:gamma-mul-le}的应用。若真实值$x$经由一次运算得到具有$n_1$阶误差界的近似值$x'$，该近似值再经由一次具有$n_2$阶误差界的运算得到结果$x''$，则$x''$相对于真实值$x$的总误差域在$n_1+n_2$阶内。
+该定理为引理~\ref{lem:gamma-mul-le}~的应用。若真实值$x$经由一次运算得到具有$n_1$阶误差界的近似值$x'$，该近似值再经由一次具有$n_2$阶误差界的运算得到结果$x''$，则$x''$相对于真实值$x$的总误差域在$n_1+n_2$阶内。
 
 这说明误差阶数满足可加性，并保证了在复合运算中误差界的传递性。
 
-\begin{theorem}
-\label{thm:add-bound-nonneg}
+\begin{lemma}
+\label{lem:add-bound-nonneg}
   加法运算误差的界
-\end{theorem}
+\end{lemma}
 \begin{leancode}
   lemma add_bound_nonneg
     (nx ny : ℕ) (x y x' y' : ℝ)
@@ -454,10 +620,10 @@ $$
 \end{proof}
 需要说明的是，上述推导环节中最后一个等式的成立依赖于变量$x, y$同号。在Lean中，将此结论分为了非负和非正两个版本。
 
-\begin{theorem}
-\label{thm:mul-bound}
+\begin{lemma}
+\label{lem:mul-bound}
   乘法运算误差的界
-\end{theorem}
+\end{lemma}
 \begin{leancode}
   lemma mul_bound
     (nx ny : ℕ) (x y x' y' : ℝ)
@@ -480,6 +646,7 @@ $$
 \end{proof}
 
 \begin{definition}
+\label{def:fl}
   浮点误差
 \end{definition}
 \begin{leancode}
@@ -654,6 +821,7 @@ $$
 \section{Householder过程}
 
 \begin{definition}
+\label{def:householder}
   Householder算法
 \end{definition}
 对于任意非零向量$x\in\mathbb{R}^n$，可通过下列Householder算法步骤计算向量$v$，以构造适当的变换使得$\left(I-vv^T\right)x=-\left(\sign x_1\right)\|x\|_2e_1$成立：
@@ -819,12 +987,12 @@ $$
   have s_bound : diff_gamma_bound u (n + 2) hv.s hv_fl.s
 \end{leancode}
 
-由$s$的定义可知，$s$与$x_1$同号。依据定理~\ref{thm:add-bound-nonneg}，同号相加的误差界由操作数的最大误差界决定。加上本次浮点加法的误差，得到$v_0$的误差界：
+由$s$的定义可知，$s$与$x_1$同号。依据引理~\ref{lem:add-bound-nonneg}，同号相加的误差界由操作数的最大误差界决定。加上本次浮点加法的误差，得到$v_0$的误差界：
 \begin{leancode}
   have v0_bound : diff_gamma_bound u (n + 3) hv.v0 hv_fl.v0
 \end{leancode}
 
-由上文，变量$s$有$n+2$阶界，变量$v_0$有$n+3$阶界。依据定理~\ref{thm:mul-bound}，乘积$s\cdot v_0$有$2n+5$阶界。加上本次浮点乘法操作的误差，得到变量$p$的界：
+由上文，变量$s$有$n+2$阶界，变量$v_0$有$n+3$阶界。依据引理~\ref{lem:mul-bound}，乘积$s\cdot v_0$有$2n+5$阶界。加上本次浮点乘法操作的误差，得到变量$p$的界：
 \begin{leancode}
   have p_bound : diff_gamma_bound u (2 * n + 6) hv.p hv_fl.p
 \end{leancode}
@@ -845,7 +1013,7 @@ $$
   have b_bound : diff_gamma_bound u (4 * n + 14) hv.b hv_fl.b
 \end{leancode}
 
-最后计算输出向量的分量误差。对于首位以外的分量$i>1$，由式$\hat{v_i}=fl(\hat{b}\cdot x_i)$及乘法定理~\ref{thm:mul-bound}，由于$x_i$为精确常量，$\hat{v_i}$的误差界为$4n+15$阶。对于首位分量，$\hat{v_1}=fl(\hat{b}\cdot\hat{v_0})$，由于$\hat{v_0}$带有$n+3$阶误差，故由乘法定理知$\hat{v_1}$的误差界为$5n+18$阶。为统一定义，取各个分量的最大误差界，即最终输出向量的所有分量均被$5n+18$阶常数界控制。
+最后计算输出向量的分量误差。对于首位以外的分量$i>1$，由式$\hat{v_i}=fl(\hat{b}\cdot x_i)$及乘法引理~\ref{lem:mul-bound}，由于$x_i$为精确常量，$\hat{v_i}$的误差界为$4n+15$阶。对于首位分量，$\hat{v_1}=fl(\hat{b}\cdot\hat{v_0})$，由于$\hat{v_0}$带有$n+3$阶误差，故由乘法定理知$\hat{v_1}$的误差界为$5n+18$阶。为统一定义，取各个分量的最大误差界，即最终输出向量的所有分量均被$5n+18$阶常数界控制。
 \end{proof}
 
 \chapter{总结}
