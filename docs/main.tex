@@ -353,11 +353,11 @@ $$2^5\times1.001111\approx2^5\times1.0100=40$$
 舍入误差的边界受限于浮点格式的尾数长度。假设浮点系统提供$m$位尾数，则单次舍入操作产生的相对误差不超过$1/2^{m+1}$。在此基础上，数值分析中常引入如下标准浮点误差模型以量化计算偏差：
 
 设$x,\ y\in\mathbb{R}$，记$op\in\{+,-,\times,/\}$为基本浮点运算符号。一次标准浮点运算的计算结果可表示为：
-$$fl(x\ op\ y)=(x\ op\ y)(1+\delta),\quad |\delta|\le u$$
+$$\mathrm{fl}(x\ op\ y)=(x\ op\ y)(1+\delta),\quad |\delta|\le u$$
 
 % TODO: add sqrt
 
-其中$fl(\cdot)$表示机器系统内的浮点算术实现，$\delta$为该次运算产生的相对舍入误差，$u$称为机器精度，是一个完全由硬件存储精度决定的正常数。
+其中$\mathrm{fl}(\cdot)$表示机器系统内的浮点算术实现，$\delta$为该次运算产生的相对舍入误差，$u$称为机器精度，是一个完全由硬件存储精度决定的正常数。
 
 需要注意的是，某些特定的基础操作（如取相反数、与零相加）不涉及尾数的舍入截断，从而不会引入舍入误差。
 
@@ -1124,7 +1124,21 @@ $$
       fl_smul_vec u hv_fl.b hv_fl.v' hv_fl.v
 \end{leancode}
 
-上述代码链式的将结构体中的变量组合到了一起，形成了一个完整的谓词\lean{fl_householder}，用于描述Householder算法在浮点环境中的计算过程。
+上述谓词\lean{fl_householder}以链式断言的形式，完整刻画了在浮点环境中执行Householder算法时各中间变量的计算关系。它将第4.3节中定义的精确计算过程与这里的浮点版本一一对应：每个中间变量（$\hat{l'}$、$\hat{l}$、$\hat{s}$、$\hat{v_0}$、$\hat{p}$、$\hat{\beta}$、$\hat{b}$、$\hat{v'}$、$\hat{v}$）均通过对应的浮点运算谓词与前驱量建立联系。具体而言：
+
+\begin{itemize}
+  \item $\hat{l'}$由浮点向量点乘\lean{fl_vec_dot}计算$x^\mathrm{T}x$得到；
+  \item $\hat{l}$由浮点开方运算\lean{fl}计算$\sqrt{\hat{l'}}$得到；
+  \item $\hat{s}$直接等于$\sign(x)\cdot\hat{l}$（符号运算是精确的，不引入浮点误差）；
+  \item $\hat{v_0}$由浮点加法\lean{fl_add}计算$x_1+\hat{s}$得到；
+  \item $\hat{p}$由浮点乘法\lean{fl_mul}计算$\hat{s}\cdot\hat{v_0}$得到；
+  \item $\hat{\beta}$由浮点除法运算\lean{fl}计算$1/\hat{p}$得到；
+  \item $\hat{b}$由浮点开方运算\lean{fl}计算$\sqrt{\hat{\beta}}$得到；
+  \item $\hat{v'}$由精确赋值定义（同第4.3节）；
+  \item $\hat{v}$由浮点向量数乘\lean{fl_smul_vec}计算$\hat{b}\cdot\hat{v'}$得到。
+\end{itemize}
+
+该定义为后续的误差分析提供了模型，所有误差来源均在定义中显式标出，接下来的定理将以此为基础，逐层追踪误差的累积过程。
 
 \begin{theorem}
   Householder算法误差的界（\cite{higham2002}~引理19.1）
@@ -1139,56 +1153,79 @@ $$
       (householder n x hn).v hv_fl.v
 \end{leancode}
 
-该引理证明了对于输出向量各分量均存在$\theta_i$满足：在误差界$|\theta_i|\le\gamma_{5n+18}$条件下取得$\hat{v_i}=v_i(1+\theta_i)$（$1\le i\le n$）。 
+本定理是第四章、也是本项目的核心结论，对应Higham~\cite{higham2002}~中的引理19.1。它给出了浮点环境中Householder算法输出向量$\hat{v}$相对于精确值$v$的误差上界。
+
+条件：
+\begin{itemize}
+  \item $n\neq0$：向量非空；
+  \item $x\neq0$：输入向量非零；
+  \item \lean{hv_fl}是一个\lean{Householder}结构体实例，包含全部浮点计算中间变量；
+  \item $(8n+26)u<1$：该条件确保了在整个误差追踪过程中，所有涉及到的$\gamma$阶数均有定义，且满足所有需要用到的引理的条件；
+  \item \lean{fl_householder u n x hn hv_fl}：即$\hat{v}$中各中间变量满足上述浮点计算关系。
+\end{itemize}
+
+结论：输出向量$\hat{v}$的每个分量$\hat{v}_i$均满足$n$阶误差界，具体而言，对任意$i$（$1\le i\le n$），存在$|\delta_i|\le\gamma_{5n+18}$使得
+$$
+\hat{v}_i = v_i\,(1+\delta_i).
+$$
+
+用向量形式的误差界谓词表达即为
+$$
+\bigl|\hat{v}_i - v_i\bigr| \le \gamma_{5n+18}\,|v_i|,\quad \forall i.
+$$
 
 \begin{proof}
-此处按计算顺序分步证明各步的具体累积误差界。作为参照基础，先行实例化不含浮点波动的精确过程变量结构\lean{hv}：
-\begin{leancode}
-  let hv := householder n x hn
-\end{leancode}
+我们按照Householder算法的计算顺序，依次追踪各中间变量的误差累积。记$hv$为精确计算所得的结构体（即\lean{let hv := householder n x hn}），作为误差分析的参照基准。以下逐步推导各变量的误差阶数。
 
-基于$l'$的定义与定理~\ref{thm:fl-vec-dot-bound}，得到：
-\begin{leancode}
-  have l'_bound : diff_gamma_bound u (n + 1) hv.l' hv_fl.l'
-\end{leancode}
+$l'$的误差：由$l'=x^\mathrm{T}x$及其浮点版本$\hat{l'}$的定义，定理~\ref{thm:fl-vec-dot-bound}（向量自内积误差界）直接给出
+$$
+|\hat{l'} - l'| \le \gamma_{n+1}\,l'.
+$$
+即$\hat{l'}$满足$n+1$阶误差界。
 
-由引理~\ref{lem:sqrt-bound}，开方运算不放大输入误差的上界。叠加本次浮点开方运算引入的一次误差，得到变量$l$的误差界：
-\begin{leancode}
-  have l_bound : diff_gamma_bound u (n + 2) hv.l hv_fl.l
-\end{leancode}
+$l$的误差：由$l=\sqrt{l'}$，$\hat{l}=\mathrm{fl}(\sqrt{\hat{l'}})$。先应用引理~\ref{lem:sqrt-bound}（开方不放大误差），$\sqrt{\hat{l'}}$的误差仍为$n+1$阶。再叠加本次浮点开方运算引入的一次误差（$\gamma_1$阶），利用误差传递定理~\ref{thm:diff-gamma-bound-trans}，得到$\hat{l}$满足$n+2$阶误差界。
+$$
+|\hat{l} - l| \le \gamma_{n+2}\,l.
+$$
 
-由于符号函数取值仅为$1$或$-1$，不引入额外浮点误差，因此$s$的误差界与$l$相同：
-\begin{leancode}
-  have s_bound : diff_gamma_bound u (n + 2) hv.s hv_fl.s
-\end{leancode}
+$s$的误差：$s=\sign(x)\cdot l$，而符号函数取值仅为$1$或$-1$，是精确运算，不引入额外浮点误差。因此$\hat{s}=\sign(x)\cdot\hat{l}$，其误差阶数与$l$相同，即$n+2$阶：
+$$
+|\hat{s} - s| \le \gamma_{n+2}\,|s|.
+$$
 
-由$s$的定义可知，$s$与$x_1$同号。依据引理~\ref{lem:add-bound-nonneg}，同号相加的误差界由操作数的最大误差界决定。加上本次浮点加法的误差，得到$v_0$的误差界：
-\begin{leancode}
-  have v0_bound : diff_gamma_bound u (n + 3) hv.v0 hv_fl.v0
-\end{leancode}
+$v_0$的误差：由$v_0=x_1+s$，$\hat{v_0}=\mathrm{fl}(x_1+\hat{s})$。由于$s$与$x_1$同号（由$\sign$的定义保证），满足引理~\ref{lem:add-bound-nonneg}~的同号相加条件。两个加数$s$（$n+2$阶误差）和$x_1$（精确值）的误差阶数中较大者为$n+2$阶。叠加本次浮点加法引入的一次误差，得到$\hat{v_0}$满足$n+3$阶误差界：
+$$
+|\hat{v_0} - v_0| \le \gamma_{n+3}\,|v_0|.
+$$
 
-由上文，变量$s$有$n+2$阶界，变量$v_0$有$n+3$阶界。依据引理~\ref{lem:mul-bound}，乘积$s\cdot v_0$有$2n+5$阶界。加上本次浮点乘法操作的误差，得到变量$p$的界：
-\begin{leancode}
-  have p_bound : diff_gamma_bound u (2 * n + 6) hv.p hv_fl.p
-\end{leancode}
+$p$的误差：由$p=s\cdot v_0$，$\hat{p}=\mathrm{fl}(\hat{s}\cdot\hat{v_0})$。$\hat{s}$有$n+2$阶误差，$\hat{v_0}$有$n+3$阶误差。由乘法引理~\ref{lem:mul-bound}，乘积$\hat{s}\cdot\hat{v_0}$的理论误差阶数为$(n+2)+(n+3)=2n+5$阶。叠加本次浮点乘法引入的一次误差，得到$\hat{p}$满足$2n+6$阶误差界：
+$$
+|\hat{p} - p| \le \gamma_{2n+6}\,|p|.
+$$
 
-由引理~\ref{lem:inv-bound}，取倒数后误差阶数翻倍，得出倒数$1/p$的误差界：
-\begin{leancode}
-  have p_bound' : diff_gamma_bound u (4 * n + 12)
-                  (1 / hv.p) (1 / hv_fl.p)
-\end{leancode}
+$\beta$的误差：由$\beta=1/p$，$\hat{\beta}=\mathrm{fl}(1/\hat{p})$。先应用引理~\ref{lem:inv-bound}（倒数运算使误差阶数翻倍），$1/\hat{p}$的误差阶数为$2\cdot(2n+6)=4n+12$阶。再叠加本次浮点除法运算引入的一次误差，得到$\hat{\beta}$满足$4n+13$阶误差界：
+$$
+|\hat{\beta} - \beta| \le \gamma_{4n+13}\,|\beta|.
+$$
 
-因$\hat{\beta}=fl(\frac{1}{\hat{p}})$，增加一次浮点赋值误差，得到$\beta$的界：
-\begin{leancode}
-  have β_bound : diff_gamma_bound u (4 * n + 13) hv.β hv_fl.β
-\end{leancode}
+$b$的误差：由$b=\sqrt{\beta}$，$\hat{b}=\mathrm{fl}(\sqrt{\hat{\beta}})$。与第2步类似，开方不放大误差（引理~\ref{lem:sqrt-bound}），叠加一次浮点开方误差，得到$\hat{b}$满足$4n+14$阶误差界：
+$$
+|\hat{b} - b| \le \gamma_{4n+14}\,|b|.
+$$
 
-与计算$l$的步骤相似，开根运算不放大误差阶数。叠加本次开根号的浮点误差后，得到变量$b$的界：
-\begin{leancode}
-  have b_bound : diff_gamma_bound u (4 * n + 14) hv.b hv_fl.b
-\end{leancode}
+最终，输出向量$v$的误差：由$v=b\,v'$，$\hat{v}=\mathrm{fl}(\hat{b}\cdot\hat{v'})$。需分别考虑两个情形：
 
-最后计算输出向量的分量误差。对于首位以外的分量$i>1$，由式$\hat{v_i}=fl(\hat{b}\cdot x_i)$及乘法引理~\ref{lem:mul-bound}，由于$x_i$为精确常量，$\hat{v_i}$的误差界为$4n+15$阶。对于首位分量，$\hat{v_1}=fl(\hat{b}\cdot\hat{v_0})$，由于$\hat{v_0}$带有$n+3$阶误差，故由乘法定理知$\hat{v_1}$的误差界为$5n+18$阶。为统一定义，取各个分量的最大误差界，即最终输出向量的所有分量均被$5n+18$阶常数界控制。
+\begin{itemize}
+  \item 对于$i>1$的分量，$v_i=b\,x_i$，$\hat{v_i}=\mathrm{fl}(\hat{b}\cdot x_i)$。因为$x_i$是精确值（输入向量的分量），由乘法引理~\ref{lem:mul-bound}，误差阶数为$4n+14$（$\hat{b}$的阶数）加$0$（$x_i$为精确量），叠加一次浮点乘法误差，得$4n+15$阶。
+  \item 对于$i=1$的首分量，$v_1=b\,v_0$，$\hat{v_1}=\mathrm{fl}(\hat{b}\cdot\hat{v_0})$。$\hat{b}$有$4n+14$阶误差，$\hat{v_0}$有$n+3$阶误差。由乘法引理，误差阶数为$(4n+14)+(n+3)=5n+17$阶，叠加一次浮点乘法误差，得$5n+18$阶。
+\end{itemize}
+
+由于首分量的误差阶数最高，取各分量的最大值作为统一定义，即最终输出向量$\hat{v}$的所有分量均被$5n+18$阶误差界控制：
+$$
+\bigl|\hat{v}_i - v_i\bigr| \le \gamma_{5n+18}\,|v_i|,\quad \forall i.
+$$
+
+以上推导步骤完整地追踪了Householder算法中每一步浮点运算引入的误差及其累积效果。每一步的误差阶数均通过前文建立的基础引理（加法、乘法、开方、倒数等）递推得到。最终结论$\gamma_{5n+18}$中的常数$5n+18$来源于各步误差阶数的逐层累加，体现了误差随向量维度$n$的近线性增长规律，从而证实了Householder算法的数值稳定性。
 \end{proof}
 
 \chapter{总结}
