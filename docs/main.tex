@@ -968,28 +968,48 @@ $$
                  then - sign x hn * Real.sqrt (x ⬝ x) else 0
 \end{leancode}
 
-如同2.2.3小节中所述，我们选取Householder变换的目标向量为$\sigma e_1=-\sign(x_1)\|x\|_2$。
+如第2.2.3小节所述，在构造Householder变换时，我们需要找到一个正交反射矩阵$P$，使得$Px=\sigma e_1$，其中$e_1=(1,0,\dots,0)^\mathrm{T}$是第一个分量上的单位向量，而$\sigma$是一个符号选择后的标量。我们选取的目标向量为
+$$
+\sigma e_1 = -\sign(x_1)\|x\|_2\,e_1.
+$$
+
+换言之，该向量仅第一个分量非零，其值为$-\sign(x_1)\|x\|_2$，其余分量均为$0$。在Lean代码中，\lean{Real.sqrt (x ⬝ x)}即对应$\|x\|_2$（因为$x^\mathrm{T}x=\|x\|_2^2$），而\lean{sign x hn}即第4.1节定义的符号函数。整个函数逐分量定义：当指标$i$表示第一个位置时（在Lean中是$i=0$），返回$-\sign(x)\|x\|_2$，否则返回$0$。
 
 \begin{definition}
 \label{def:householder}
   Householder算法
 \end{definition}
-对于任意非零向量$x\in\mathbb{R}^n$，可通过下列Householder算法步骤计算向量$v$，以构造适当的变换使得$\left(I-vv^\mathrm{T}\right)x=-\left(\sign x_1\right)\|x\|_2e_1$成立：
+
+对于任意非零向量$x\in\mathbb{R}^n$，Householder算法通过以下七步计算构造反射矩阵所需的向量$v$，使得$P=I-vv^\mathrm{T}$满足$Px=-\sign(x_1)\|x\|_2e_1$：
+
+\begin{enumerate}
+  \item 计算向量模长的平方：$l' = x^\mathrm{T}x$。
+  \item 计算模长：$l = \sqrt{l'}$。
+  \item 引入符号：$s = \sign(x)\cdot l$，即$s = -\sigma$。
+  \item 构造$v$的首分量：$v_1 = x_1 + s$。注意由$\sign$的定义，$s$与$x_1$符号相反，因此$v_1\neq0$。
+  \item 计算辅助标量：$p = s\cdot v_1$。
+  \item 计算$\beta = 1/p$，再计算$b = \sqrt{\beta}$。
+  \item 定义向量$v'$：$v'_1=v_1$，$v'_i=x_i\;(i>1)$，再令$v = b\,v'$。
+\end{enumerate}
+
+将上述计算过程整理为方程组的形式如下：
 $$
 \left\{
 \begin{array}{l}
-l' = x^\mathrm{T}x \\
-l = \sqrt{l'} \\
-s = \sign(x)\cdot l \\
-v_1 = x_1 + s \\
-p = s v_1 \\
-\beta = 1/p \\
-b = \sqrt{\beta}\\
-v' = \begin{cases}v_1, & i=1 \\ x_i, & i>1\end{cases}\\
-v = b v'
+l' = x^\mathrm{T}x, \\
+l = \sqrt{l'}, \\
+s = \sign(x)\cdot l, \\
+v_1 = x_1 + s, \\
+p = s\,v_1, \\
+\beta = 1/p, \\
+b = \sqrt{\beta}, \\
+v'_i = \begin{cases}v_1, & i=1, \\ x_i, & i>1,\end{cases} \\
+v = b\,v'.
 \end{array}
 \right.
 $$
+
+在Lean中，我们使用了一个结构体\lean{Householder}来封装这$9$个中间变量，并定义了函数\lean{householder}来实现上述计算过程。该函数逐一计算各中间变量，并将结果打包为结构体返回。具体Lean代码如下：
 \begin{leancode}
   structure Householder (n : ℕ) (hn : n ≠ 0) where
     l' : ℝ
@@ -1035,43 +1055,46 @@ $$
         P • x = sigma_e₁ n x hn
 \end{leancode}
 
-我们证明如上的Householder算法的正确性，即当$x\neq 0$时，通过上述步骤计算得到的向量$v$可以满足$P=I-vv^\mathrm{T}$作用于输入向量$x$后，结果的确为$\sigma e_1=-\sign(x_1)\|x\|_2e_1$。
+本定理是本节的核心结论，它断言上述Householder算法的正确性。前提条件：$n\neq0$（保证向量非空），且$x$为非零向量（若$x=0$则反射矩阵无意义）。在此条件下，令$hv$为算法返回的结构体，令$P = I - vv^\mathrm{T}$为所构造的反射矩阵（代码中\lean{vecMulVec hv.v hv.v}即外积$vv^\mathrm{T}$），则$P$作用于$x$的结果恰好等于目标向量$\sigma e_1$。即
+$$
+\bigl(I - vv^\mathrm{T}\bigr)x = -\sign(x_1)\|x\|_2\,e_1.
+$$
 
 \begin{proof}
-反复代入可知
+我们将通过代数推导验证这一结论。首先，考察向量$v'$的表达式：由$v'$的定义及$v_1$和$s$的关系式，反复代入可得
 $$
-v'=x-\bigl(-\left(\sign x_1\right)\|x\|_2e_1\bigr).
-$$
-
-因此由Householder矩阵的性质，我们有
-$$
-(I - \frac{2}{v'^\mathrm{T}v'}v'v'^\mathrm{T})x=-\left(\sign x_1\right)\|x\|_2e_1.
+v' = x - \bigl(-\sign(x_1)\|x\|_2\,e_1\bigr) = x - \sigma e_1.
 $$
 
-另一方面，由定义$p=sv_1=sx_1+s^2$，并且
+因此$v'$恰为输入向量$x$与目标向量$\sigma e_1$之差。由Householder矩阵的性质（第2.1.2节），对于$v'$构造的标准反射矩阵$I-\frac{2}{{v'}^\mathrm{T}v'}v'{v'}^\mathrm{T}$，我们有
 $$
-v'^\mathrm{T}v'=x^\mathrm{T}x+2sx_1+s^2=2sx_1+2s^2=2p.
-$$
-
-因此
-$$
-b=\sqrt{\beta}=\sqrt{\frac{1}{p}}=\sqrt{\frac{2}{v'^\mathrm{T}v'}}.
+\Bigl(I - \frac{2}{{v'}^\mathrm{T}v'}v'{v'}^\mathrm{T}\Bigr)x = \sigma e_1 = -\sign(x_1)\|x\|_2\,e_1.
 $$
 
-令$v=bv'$，则有
+接下来证明经过缩放后的$v = bv'$构造的矩阵$I-vv^\mathrm{T}$与上述标准形式相同。由定义$p = s\cdot v_1$以及$s$和$v_1$的表达式，计算可得
 $$
-v^\mathrm{T}v=b^2v'^\mathrm{T}v'=\frac{2}{v'^\mathrm{T}v'}v'^\mathrm{T}v'=2.
+{v'}^\mathrm{T}v' = x^\mathrm{T}x + 2sx_1 + s^2 = 2sx_1 + 2s^2 = 2p.
 $$
 
 从而
 $$
-I-\frac{2}{v'^\mathrm{T}v'}v'v'^\mathrm{T}=I-vv^\mathrm{T}.
+b = \sqrt{\beta} = \sqrt{\frac{1}{p}} = \sqrt{\frac{2}{{v'}^\mathrm{T}v'}}.
 $$
 
-因此最后一步中的缩放因子$b$将向量归一化，使Householder矩阵从标准形式$I-\frac{2}{v'^\mathrm{T}v'}v'v'^\mathrm{T}$化为计算上更为简洁的$I-vv^\mathrm{T}$。
+令$v = bv'$，则
+$$
+v^\mathrm{T}v = b^2 {v'}^\mathrm{T}v' = \frac{2}{{v'}^\mathrm{T}v'}\cdot {v'}^\mathrm{T}v' = 2.
+$$
+
+因此
+$$
+I - vv^\mathrm{T} = I - \frac{2}{{v'}^\mathrm{T}v'}v'{v'}^\mathrm{T}.
+$$
+
+等式右侧正是以$v'$构造的标准Householder反射矩阵，而我们已经知道该矩阵能将$x$映射到$\sigma e_1$，故左侧的矩阵$I-vv^\mathrm{T}$同样具有这一性质。最后一式中的缩放因子$b$实质上起到归一化的作用：它将$v'$缩放到$v^\mathrm{T}v=2$，使得反射矩阵的表达形式从$I-\frac{2}{{v'}^\mathrm{T}v'}v'{v'}^\mathrm{T}$简化为$I-vv^\mathrm{T}$，这一简化形式在真实场景中可以节省计算量，且在误差分析中更为方便。
 \end{proof}
 
-以上的证明过程中引用了Householder矩阵的性质。但在Lean形式化系统中，这需被拆解为更基本的命题进行逐级证明。完整的形式化证明在代码库的\texttt{Householder.lean}内。
+上述推导在数学层面上完整地验证了Householder算法的正确性。在Lean形式化系统中，这一证明被拆解为多个更基本的命题和代数恒等式逐级完成。完整的机器可验证证明代码见源文件\texttt{Householder.lean}。
 
 \section{Householder法的误差估计}
 
@@ -1101,7 +1124,7 @@ $$
       fl_smul_vec u hv_fl.b hv_fl.v' hv_fl.v
 \end{leancode}
 
-上述代码以相继传递的中间变量形式，构建了考虑浮点误差扰动的Householder计算序列模型。在此链式结构中，每层衍生变量均须满足基于其直接前驱量的单次运算浮点误差。接下来的证明中，将逐层追踪误差在公式链中的放大特征，最终界定总体输出误差。
+上述代码链式的将结构体中的变量组合到了一起，形成了一个完整的谓词\lean{fl_householder}，用于描述Householder算法在浮点环境中的计算过程。
 
 \begin{theorem}
   Householder算法误差的界（\cite{higham2002}~引理19.1）
