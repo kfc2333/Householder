@@ -230,24 +230,24 @@ Householder矩阵是数值线性代数中一种重要的正交变换工具，广
 \subsection{定义与性质}
 
 Householder矩阵（或称Householder变换矩阵）是具有如下形式的矩阵：
-$$P=I-\frac{2}{v^Tv}vv^T,\quad 0\neq v \in \mathbb{R}^n$$
+$$P=I-\frac{2}{v^\mathrm{T}v}vv^\mathrm{T},\quad 0\neq v \in \mathbb{R}^n$$
 
 显然$P$为对称矩阵。另一方面，由
 \begin{align*}
-P^2&=I-\frac{4}{v^Tv}vv^T+\frac{4}{(v^Tv)^2}vv^Tvv^T\\&=I-\frac{4}{v^Tv}vv^T+\frac{4}{(v^Tv)^2}v(v^Tv)v^T=I
+P^2&=I-\frac{4}{v^\mathrm{T}v}vv^\mathrm{T}+\frac{4}{(v^\mathrm{T}v)^2}vv^\mathrm{T}vv^\mathrm{T}\\&=I-\frac{4}{v^\mathrm{T}v}vv^\mathrm{T}+\frac{4}{(v^\mathrm{T}v)^2}v(v^\mathrm{T}v)v^\mathrm{T}=I
 \end{align*}
 
 结合其对称性易知$P$为正交矩阵。
 
 \subsection{Householder变换}
 
-考虑方程$Px=y$。其中$x,y$为常数，满足$\|x\|_2=\|y\|_2$，我们需要求解满足方程的矩阵$P$。在这里我们令$P$为Householder矩阵，该方程可化为：$$x-2(\frac{v^Tx}{v^Tv})v=y$$
+考虑方程$Px=y$。其中$x,y$为常数，满足$\|x\|_2=\|y\|_2$，我们需要求解满足方程的矩阵$P$。在这里我们令$P$为Householder矩阵，该方程可化为：$$x-2(\frac{v^\mathrm{T}x}{v^\mathrm{T}v})v=y$$
 
-令$v=x-y$，易得$$v^Tv=x^Tx+y^Ty-2x^Ty$$
+令$v=x-y$，易得$$v^\mathrm{T}v=x^\mathrm{T}x+y^\mathrm{T}y-2x^\mathrm{T}y$$
 
-由$\|x\|_2=\|y\|_2$，即$x^Tx=y^Ty$，故$$v^Tx=x^Tx-x^Ty=\frac{1}{2}v^Tv$$
+由$\|x\|_2=\|y\|_2$，即$x^\mathrm{T}x=y^\mathrm{T}y$，故$$v^\mathrm{T}x=x^\mathrm{T}x-x^\mathrm{T}y=\frac{1}{2}v^\mathrm{T}v$$
 
-从而$v=x-y$及其对应的$P=I-\frac{2}{v^Tv}vv^T$构成了方程的一组解。需要注意的是，当$x=y$时，上述公式计算会导致分母为零，此时将$P$退化定义为单位矩阵$I$。
+从而$v=x-y$及其对应的$P=I-\frac{2}{v^\mathrm{T}v}vv^\mathrm{T}$构成了方程的一组解。需要注意的是，当$x=y$时，上述公式计算会导致分母为零，此时将$P$退化定义为单位矩阵$I$。
 
 \section{QR分解}
 
@@ -302,7 +302,7 @@ $\sigma_k e_1$的后$n-k$个分量均为$0$，因此$A_{k+1}$满足下一轮的�
 
 \subsection{实际计算中Householder法的细节}
 
-在上一节的迭代过程描述中，$\sigma$的符号选取尚未明确指定。理论上，对于给定的$x$，$\sigma=\pm\|x\|_2$的两种符号均可满足$\|\sigma e_1\|_2=\|x\|_2$的要求，从而都能构造出合法的Householder变换。但若$x$仅第一个分量不为零，即$x=(c,0,\ldots,0)$，且$\sigma$取与$c$同号的符号，则$x_1$与$\sigma$的符号相同，此时由Householder算法构造的向量$v$将退化为零向量，进而导致计算归一化因子$\frac{2}{v^Tv}$时分母为零。为避免这一退化情形，本项目中采用如下约定：
+在上一节的迭代过程描述中，$\sigma$的符号选取尚未明确指定。理论上，对于给定的$x$，$\sigma=\pm\|x\|_2$的两种符号均可满足$\|\sigma e_1\|_2=\|x\|_2$的要求，从而都能构造出合法的Householder变换。但若$x$仅第一个分量不为零，即$x=(c,0,\ldots,0)$，且$\sigma$取与$c$同号的符号，则$x_1$与$\sigma$的符号相同，此时由Householder算法构造的向量$v$将退化为零向量，进而导致计算归一化因子$\frac{2}{v^\mathrm{T}v}$时分母为零。为避免这一退化情形，本项目中采用如下约定：
 $$\sigma = -\sign (x)\|x\|_2$$
 
 其中$\sign(x)$的定义如\ref{def:sign}所示。当$x_1<0$时取$-1$，$x_1\ge 0$时取$1$。在这一约定下，只要$x\neq 0$，或者$x_1$与$\sigma$均非零且异号，或者$x_1$为零从而$x\neq(c,0,\ldots,0)$。因此$v$一定非零。
@@ -312,13 +312,13 @@ $$\sigma = -\sign (x)\|x\|_2$$
 另外，在实际计算中，显式构造并存储完整的因式矩阵$P_k$既耗时也无必要。注意到在QR分解的迭代过程中，$P_k$始终以左乘的形式作用于某矩阵子块。由Householder矩阵的定义可知：
 
 $$
-\widetilde{P_k} = I - \frac{2}{v^Tv}vv^T,
+\widetilde{P_k} = I - \frac{2}{v^\mathrm{T}v}vv^\mathrm{T},
 $$
 
 因此对于任意矩阵$X$，
 
 $$
-\widetilde{P_k}X = \left(I - \frac{2}{v^Tv}vv^T\right)X = X - \left(\frac{2}{v^Tv}v\right)(v^TX).
+\widetilde{P_k}X = \left(I - \frac{2}{v^\mathrm{T}v}vv^\mathrm{T}\right)X = X - \left(\frac{2}{v^\mathrm{T}v}v\right)(v^\mathrm{T}X).
 $$
 
 该表达式仅涉及向量$v$与矩阵$X$之间的数乘和乘法运算，无需显式构建$\widetilde{P_k}$。因此，实际实现中只需存储每次迭代得到的向量$v_k$，即可通过上述公式高效地完成对后继矩阵的更新。因此我们在本项目中不关注$P$的精度，而是直接分析向量$v$的计算误差。
@@ -354,6 +354,8 @@ $$2^5\times1.001111\approx2^5\times1.0100=40$$
 
 设$x,\ y\in\mathbb{R}$，记$op\in\{+,-,\times,/\}$为基本浮点运算符号。一次标准浮点运算的计算结果可表示为：
 $$fl(x\ op\ y)=(x\ op\ y)(1+\delta),\quad |\delta|\le u$$
+
+% TODO: add sqrt
 
 其中$fl(\cdot)$表示机器系统内的浮点算术实现，$\delta$为该次运算产生的相对舍入误差，$u$称为机器精度，是一个完全由硬件存储精度决定的正常数。
 
@@ -739,37 +741,54 @@ $$
 
 \begin{definition}
 \label{def:fl}
-  浮点误差
+  单次浮点运算的误差模型
 \end{definition}
 \begin{leancode}
   def fl (x x' : ℝ) : Prop :=
     ∃ δ : ℝ, |δ| ≤ (u : ℝ) ∧ x * (1 + δ) = x'
 \end{leancode}
 
-对于单次基本的浮点运算，其计算结果$x'$与真实结果$x$之间的关系定义为：存在误差参数$\delta$使得$x' = x(1+\delta)$且$|\delta|\le u$。这表明计算结果的相对偏差受到机器精度$u$的控制。
+与第2.3节中描述的浮点误差模型一致，我们在此定义谓词\lean{fl}来描述单次基本浮点运算产生的误差：对于给定的精确运算结果$x$和浮点计算结果$x'$，\lean{fl u x x'}成立当且仅当存在一个实数$\delta$满足
+$$
+|\delta|\le u,\qquad x' = x(1+\delta).
+$$
+
+该定义是后续所有误差分析的基础——无论是加法、乘法还是开方运算，其浮点实现所引入的误差均以此为标准模型进行描述。
 
 \begin{lemma}
-  浮点误差界与$\gamma$误差界的关系
+  单次浮点误差与$\gamma$误差界的关系
 \end{lemma}
 \begin{leancode}
   lemma fl_to_gamma_bound (x x' : ℝ) (hu : (u : ℝ) < 1) :
     fl u x x' → diff_gamma_bound u 1 x x'
 \end{leancode}
 
-易知由于前提满足$\gamma_1 > u$，单次基本浮点运算产生的误差可直接被$\gamma_1$误差界控制。
+本引理将单次浮点误差模型与$\gamma$误差界联系起来。若$u<1$，且浮点计算结果$x'$满足$\mathrm{fl}(x)=x'$（即$|\delta|\le u$，$x'=x(1+\delta)$）。则单次浮点运算产生的误差可直接被$\gamma_1$误差界所控制，即
+$$
+|x'-x| \le \gamma_1|x|.
+$$
+
+证明此结论只需验证$\gamma_1 > u$。由$\gamma_1$的定义$\gamma_1=u/(1-u)$，结合$u<1$即得。因此，$|\delta|\le u<\gamma_1$，从而$|x'-x|\le u|x|<\gamma_1|x|$。
+
+这一引理的作用在于：在后续复合运算的误差分析中，我们可将每次基本浮点运算的误差统一用$\gamma$阶数来表示，从而充分利用$\gamma$函数的可加性进行误差累积。
 
 \begin{definition}
-  向量的浮点误差界
+  向量的$\gamma$误差界
 \end{definition}
 \begin{leancode}
   def diff_gamma_bound_vec (n : ℕ) {m : ℕ} (x : Vec m) (x' : Vec m) : 
     Prop := ∀ i, diff_gamma_bound u n (x i) (x' i)
 \end{leancode}
 
-该定义表明，向量整体落在$n$阶误差界内等价于其内部每一个分量的误差均受到$n$阶误差界的限制。
+前面定义的\lean{diff_gamma_bound}仅适用于标量（实数）之间的误差关系。对于向量，我们将误差界概念逐分量推广：向量$x'$落在$x$的$n$阶误差界内，当且仅当对于每一个分量指标$i$，均有$x'_i$落在$x_i$的$n$阶误差界内，即
+$$
+\forall i,\; |x'_i - x_i| \le \gamma_n|x_i|.
+$$
+
+该定义将作为后续判定Householder输出向量误差的最终标准。
 
 \begin{definition}
-  基础运算的浮点误差界
+  基本浮点运算的谓词封装
 \end{definition}
 \begin{leancode}
   def fl_add (x y z : ℝ) : Prop :=
@@ -781,10 +800,12 @@ $$
       ∀ i, fl u (a * x i) (y i)
 \end{leancode}
 
-上述代码分别定义了加法、乘法及向量数乘运算的浮点实现。其核心条件为每一次运算的操作结果均被约束在真实结果的精度$u$的单次浮点误差界以内。
+以上三个定义是对基础浮点运算的谓词封装。\lean{fl_add x y z}表示$z$是$x+y$的浮点计算结果，即将$z$表示成$z=(x+y)(1+\delta)$时，有$|\delta|\le u$；类似地，\lean{fl_mul x y z}表示$z$是$x\times y$的浮点计算结果。\lean{fl_smul_vec a x y}表示向量$y$是标量$a$与向量$x$的数乘结果的浮点实现，即对每个分量$i$均有$y_i$是$a\cdot x_i$的浮点计算结果。
+
+在后续的Householder误差分析中，我们将通过这些封装好的谓词来描述每一步中间变量的浮点计算关系。
 
 \begin{definition}
-  带误差的向量点乘
+  带浮点误差的向量点乘
 \end{definition}
 \begin{leancode}
   def fl_vec_dot : {n : ℕ} → Vec n → Vec n → ℝ → Prop
@@ -798,13 +819,20 @@ $$
         fl_add u p s z
 \end{leancode}
 
-定义了带误差的向量点乘。我们递归地定义这个过程：当$n=0$时，点乘结果为$0$；当$n>0$时，先计算一个分量的乘积$p$，再递归计算剩余分量的点乘结果$s$，最后将两者相加得到最终结果$z$。每一步运算均满足一次浮点误差界。
+为了描述向量点乘运算在浮点环境中的计算结果，我们递归地定义了谓词\lean{fl_vec_dot}。其递归结构直接对应点乘的计算过程：
 
-需要注意的是，为了简化形式化证明的结构，上述定义在$n=1$时包含了额外的计算$x_1y_1+0$，且未假设该次加法的误差为零。这使得向量内积误差的上界由理论上的$n$阶放宽至$n+1$阶，但该放宽对整体结论的影响较小。
+\begin{itemize}
+  \item 当向量长度$n=0$时，点乘结果为$0$。
+  \item 当向量长度$n>0$时，先计算第一个分量$x_1$与$y_1$的乘积$p$（满足\lean{fl_mul}），再递归计算剩余$n-1$个分量的点乘结果$s$（满足\lean{fl_vec_dot}），最后将$p$与$s$相加得到最终结果$z$（满足\lean{fl_add}）。
+\end{itemize}
+
+每一步基本运算（乘法和加法）均被约束在单次浮点误差界$u$以内。
+
+需要说明的是，上述递归定义在$n=1$时会执行一次额外的加法$p+0$，且没有假定该加法运算的误差为零。这使得最终结果的理论误差上界由通常的$n$阶放宽至$n+1$阶。虽然这一放宽在理论上并不必要，但它简化了形式化证明的递归结构，且$n+1$与$n$仅相差一个常数阶，对整体结论的量化影响较小。
 
 \begin{theorem}
 \label{thm:fl-vec-dot-bound}
-  向量自内积误差的界
+  向量自内积的误差界
 \end{theorem}
 \begin{leancode}
   theorem fl_vec_dot_bound
@@ -815,26 +843,32 @@ $$
       diff_gamma_bound u (n + 1) (x ⬝ x) z 
 \end{leancode}
 
-该定理表明，向量与其自身内积的计算结果满足$n+1$阶误差界。与\textit{Accuracy and Stability of Numerical Algorithms}~\cite{higham2002}~第3.1节中关于一般向量内积的普遍结论不同，形式化证明中仅需处理向量与自身的内积。这一条件避免了绝对值不等式的放缩，从而可以直接获得针对计算结果的误差界。
+本定理给出了向量与其自身内积的浮点计算结果的误差界。前提条件为：向量维度$n$满足$(n+1)u<1$（以保证$\gamma_{n+1}$有定义），且$z$是$x$与自身的带浮点误差的点乘结果。在此条件下，结论为
+$$
+|z - x^\mathrm{T}x| \le \gamma_{n+1}\,|x^\mathrm{T}x|.
+$$
+
+% 与\textit{Accuracy and Stability of Numerical Algorithms}~\cite{higham2002}~第3.1节中关于一般向量内积的通用结论不同，本定理仅需处理向量与自身的内积。这一特殊情形避免了绝对值不等式的放缩，从而可直接获得针对计算结果的误差界。
+
 \begin{proof}
-  记$s_i=\sum_{k=1}^i x_kx_k$，由浮点运算定义得：
+  记$s_i = \sum_{k=1}^i x_kx_k$为精确的部分和（$s_n = x^\mathrm{T}x$），$\widehat{s_i}$为对应的浮点计算结果。由浮点运算定义展开递推关系：
   \begin{align*}
-    \widehat{s_1}&=fl(0+fl(x_1x_1))\\
-    &=fl(x_1x_1)(1+\theta_1)\\
-    &=x_1x_1(1+\theta_2)\\
-    \widehat{s_i}&=fl(\widehat{s_{i-1}}+fl(x_ix_i))\\
-    &=(\widehat{s_{i-1}}+x_ix_i(1+\theta_1))(1+\theta_1)\\
-    &=(s_{i-1}(1+\theta_{i})+x_ix_i(1+\theta_1))(1+\theta_1)\\
-    &=(s_{i-1}+x_ix_i)(1+\theta_{i+1})\\
-    &=s_i(1+\theta_{i+1})
+    \widehat{s_1} &= \mathrm{fl}\bigl(0 + \mathrm{fl}(x_1x_1)\bigr) \\
+    &= \mathrm{fl}(x_1x_1)(1+\theta_1) \\
+    &= x_1x_1(1+\theta_2), \\
+    \widehat{s_i} &= \mathrm{fl}\bigl(\widehat{s_{i-1}} + \mathrm{fl}(x_ix_i)\bigr) \\
+    &= \bigl(\widehat{s_{i-1}} + x_ix_i(1+\theta_1)\bigr)(1+\theta_1) \\
+    &= \bigl(s_{i-1}(1+\theta_i) + x_ix_i(1+\theta_1)\bigr)(1+\theta_1) \\
+    &= (s_{i-1} + x_ix_i)(1+\theta_{i+1}) \\
+    &= s_i(1+\theta_{i+1}).
   \end{align*}
   
-  由此可推得$\widehat{s_n}=s_n(1+\theta_{n+1})$。
+  由此递推可得$\widehat{s_n}=s_n(1+\theta_{n+1})$，且$|\theta_{n+1}|\le\gamma_{n+1}$，故$|z - x^\mathrm{T}x| \le \gamma_{n+1}|x^\mathrm{T}x|$。
 \end{proof}
 
 \begin{lemma}
 \label{lem:sqrt-bound}
-  误差界受开方运算的影响
+  开方运算的误差传递
 \end{lemma}
 \begin{leancode}
   lemma sqrt_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x ≥ 0)
@@ -843,11 +877,16 @@ $$
       diff_gamma_bound u n (Real.sqrt x) (Real.sqrt x') 
 \end{leancode}
 
-对于非负实数$x$，若其计算值$x'$满足$n$阶误差界约束（即$x'=x(1+\theta_n)$），则开方结果$\sqrt{x'}$仍满足关于$\sqrt{x}$的$n$阶误差界。为保持公式一致性并简化形式化证明框架，此处未将理论上界缩紧至$n/2$阶，而是继续使用$n$阶作为上界。
+本引理考察开方运算对误差的影响。前提条件：$x$为非负实数（保证开方有意义），其计算值$x'$满足$n$阶误差界（即$x'=x(1+\theta_n)$，$|\theta_n|\le\gamma_n$），且$2nu<1$（以保证$\gamma_n$有定义且误差足够小）。在此条件下，开方结果$\sqrt{x'}$相对于精确值$\sqrt{x}$仍满足$n$阶误差界，即
+$$
+|\sqrt{x'} - \sqrt{x}| \le \gamma_n \sqrt{x}.
+$$
+
+从理论上讲，开方运算具有压缩误差的作用：若$x'=x(1+\delta)$，则$\sqrt{x'} \approx \sqrt{x}(1+\delta/2)$，即误差阶数可减半至$n/2$。然而，为保持整个误差分析框架中公式表达的一致性，并简化形式化证明的结构，我们在此处不进行这一缩紧，而是继续沿用$n$阶作为误差上界。这一保守处理不影响最终结论的定性正确性，只是会给出一个略为宽松的常数界。
 
 \begin{lemma}
 \label{lem:inv-bound}
-  误差界受取倒数运算的影响
+  取倒数运算的误差传递
 \end{lemma}
 \begin{leancode}
   lemma div_inv_trans_gamma_bound (n : ℕ) (x x' : ℝ) (hx : x > 0)
@@ -856,61 +895,67 @@ $$
       diff_gamma_bound u (2 * n) (1 / x) (1 / x') 
 \end{leancode}
 
-对于正实数$x$，若计算值$x'$满足$n$阶误差界，则其倒数$1/x'$满足关于$1/x$的$2n$阶误差界。
+本引理考察取倒数运算对误差的影响。前提条件：$x$为正实数（保证倒数有定义），其计算值$x'$满足$n$阶误差界，且$2nu<1$。在此条件下，倒数$1/x'$相对于精确值$1/x$满足$2n$阶误差界，即
+$$
+\left|\frac{1}{x'} - \frac{1}{x}\right| \le \gamma_{2n}\,\frac{1}{|x|}.
+$$
 
-在经典数值分析中，通常在假定精度$u$足够小的前提下使用近似等式$1/(1+\theta_n)\approx 1-\theta_n$，得出误差不扩大的结论。但在严谨的逻辑下，$1/(1-\gamma_n)\le 1+\gamma_n$并不恒成立。因此为了保证定理的绝对严谨，我们需将倒数运算引起的误差控制范围放宽至$2n$阶。
+在经典的数值分析中，通常利用近似等式$1/(1+\theta_n)\approx 1-\theta_n$（在$u\ll 1$时成立），认为取倒数不会放大误差阶数。然而，在严格的形式化证明中，不等式$1/(1-\gamma_n)\le 1+\gamma_n$并非恒成立——它仅在$\gamma_n$足够小时近似成立。为了保证结论在形式化系统中的绝对严谨性，我们不得不将倒数运算的误差界放宽至$2n$阶，使下面的不等式组成立。
+
 \begin{proof}
   只需证明
   $$
   \left\{
     \begin{array}{rl}
-      1/(1-\gamma_n)&\le 1+\gamma_{2n}\\ 
-      1/(1+\gamma_n)&\ge 1-\gamma_{2n}
+      1/(1-\gamma_n)&\le 1+\gamma_{2n},\\ 
+      1/(1+\gamma_n)&\ge 1-\gamma_{2n}.
     \end{array}
   \right.
   $$
 
-  代入$\gamma$，上两式即为
+  代入$\gamma$的定义$\gamma_k = \frac{ku}{1-ku}$，上两式化为
   $$
   \left\{
     \begin{array}{rl}
-      1/(1-\frac{nu}{1-nu})&\le 1+\frac{2nu}{1-2nu}\\ 
-      1/(1+\frac{nu}{1-nu})&\ge 1-\frac{2nu}{1-2nu}
+      1/\bigl(1-\frac{nu}{1-nu}\bigr)&\le 1+\frac{2nu}{1-2nu},\\ 
+      1/\bigl(1+\frac{nu}{1-nu}\bigr)&\ge 1-\frac{2nu}{1-2nu}.
     \end{array}
   \right.
   $$
 
-  由假设$2nu<1$，上两式的分母都为正。通分得到
+  由前提条件$2nu<1$可知各分母均为正。两边通分后，上述不等式等价于
   $$
   \left\{
     \begin{array}{rlr}
-      (1-\frac{nu}{1-nu})\cdot (1+\frac{2nu}{1-2nu})&\ge 1&\hfill(1)\\
-      (1+\frac{nu}{1-nu})\cdot (1-\frac{2nu}{1-2nu})&\le 1&\hfill(2)
+      \bigl(1-\frac{nu}{1-nu}\bigr)\cdot\bigl(1+\frac{2nu}{1-2nu}\bigr)&\ge 1,&\hfill(1)\\
+      \bigl(1+\frac{nu}{1-nu}\bigr)\cdot\bigl(1-\frac{2nu}{1-2nu}\bigr)&\le 1.&\hfill(2)
     \end{array}
   \right.
   $$
 
-  我们分开证明这两个不等式。
+  以下分别证明这两个不等式。
 
   对式(1)：
   \begin{align*}
-    (1-\frac{nu}{1-nu})\cdot (1+\frac{2nu}{1-2nu})&=1+\gamma_{2n}-\gamma_n-\gamma_n\gamma_{2n}\\
-    &\ge 1+\gamma_{2n}-2\gamma_n\\
-    &=1+\frac{2nu}{1-2nu}-\frac{2nu}{1-nu}\\
-    &\ge1
+    \bigl(1-\frac{nu}{1-nu}\bigr)\cdot\bigl(1+\frac{2nu}{1-2nu}\bigr)
+    &= 1+\gamma_{2n}-\gamma_n-\gamma_n\gamma_{2n} \\
+    &\ge 1+\gamma_{2n}-2\gamma_n \\
+    &= 1+\frac{2nu}{1-2nu}-\frac{2nu}{1-nu} \\
+    &\ge 1.
   \end{align*}
   
   对式(2)：
   \begin{align*}
-    (1+\frac{nu}{1-nu})\cdot (1-\frac{2nu}{1-2nu})&=1-\gamma_{2n}+\gamma_n-\gamma_n\gamma_2n\\
-    &=1+(\gamma_n-\gamma_{2n})-\gamma_n\gamma_{2n}\\
-    &\le 1
+    \bigl(1+\frac{nu}{1-nu}\bigr)\cdot\bigl(1-\frac{2nu}{1-2nu}\bigr)
+    &= 1-\gamma_{2n}+\gamma_n-\gamma_n\gamma_{2n} \\
+    &= 1+(\gamma_n-\gamma_{2n})-\gamma_n\gamma_{2n} \\
+    &\le 1.
   \end{align*}
 \end{proof}
 
-上述定理对负实数$x$同样成立，但在本项目中仅需处理正实数的取倒数过程，因此未单独证明负数情形。
+上述结论对负实数$x$同样成立（只需取相反数后处理），但在本项目中，Householder算法中涉及的取倒数操作仅作用于正实数$p$（$p=s\cdot v_0$，由引理可证其为正），因此我们未单独证明负数情形。
 
-以上内容涵盖了源文件\texttt{Basic.lean}中关于浮点运算误差的基础定义与核心证明，这些结论将作为工具在后续核心算法误差的推导中被反复应用。
+以上内容完整涵盖了源文件\texttt{Basic.lean}中关于浮点运算误差的基础定义与核心引理，包括$\gamma$函数的可加性、标量和向量的误差界谓词、基本运算的浮点误差封装、向量点乘的误差估计，以及开方和倒数运算的误差传递规律等结论。这些结论构成了整个Householder算法误差分析的理论工具箱。在下一节中，我们将借助这些工具，对Householder过程的每一步中间变量逐层进行误差追踪，最终给出输出向量的总体误差界。
 
 \section{Householder过程}
 
@@ -929,11 +974,11 @@ $$
 \label{def:householder}
   Householder算法
 \end{definition}
-对于任意非零向量$x\in\mathbb{R}^n$，可通过下列Householder算法步骤计算向量$v$，以构造适当的变换使得$\left(I-vv^T\right)x=-\left(\sign x_1\right)\|x\|_2e_1$成立：
+对于任意非零向量$x\in\mathbb{R}^n$，可通过下列Householder算法步骤计算向量$v$，以构造适当的变换使得$\left(I-vv^\mathrm{T}\right)x=-\left(\sign x_1\right)\|x\|_2e_1$成立：
 $$
 \left\{
 \begin{array}{l}
-l' = x^Tx \\
+l' = x^\mathrm{T}x \\
 l = \sqrt{l'} \\
 s = \sign(x)\cdot l \\
 v_1 = x_1 + s \\
@@ -990,7 +1035,7 @@ $$
         P • x = sigma_e₁ n x hn
 \end{leancode}
 
-我们证明如上的Householder算法的正确性，即当$x\neq 0$时，通过上述步骤计算得到的向量$v$可以满足$P=I-vv^T$作用于输入向量$x$后，结果的确为$\sigma e_1=-\sign(x_1)\|x\|_2e_1$。
+我们证明如上的Householder算法的正确性，即当$x\neq 0$时，通过上述步骤计算得到的向量$v$可以满足$P=I-vv^\mathrm{T}$作用于输入向量$x$后，结果的确为$\sigma e_1=-\sign(x_1)\|x\|_2e_1$。
 
 \begin{proof}
 反复代入可知
@@ -1000,30 +1045,30 @@ $$
 
 因此由Householder矩阵的性质，我们有
 $$
-(I - \frac{2}{v'^Tv'}v'v'^T)x=-\left(\sign x_1\right)\|x\|_2e_1.
+(I - \frac{2}{v'^\mathrm{T}v'}v'v'^\mathrm{T})x=-\left(\sign x_1\right)\|x\|_2e_1.
 $$
 
 另一方面，由定义$p=sv_1=sx_1+s^2$，并且
 $$
-v'^Tv'=x^Tx+2sx_1+s^2=2sx_1+2s^2=2p.
+v'^\mathrm{T}v'=x^\mathrm{T}x+2sx_1+s^2=2sx_1+2s^2=2p.
 $$
 
 因此
 $$
-b=\sqrt{\beta}=\sqrt{\frac{1}{p}}=\sqrt{\frac{2}{v'^Tv'}}.
+b=\sqrt{\beta}=\sqrt{\frac{1}{p}}=\sqrt{\frac{2}{v'^\mathrm{T}v'}}.
 $$
 
 令$v=bv'$，则有
 $$
-v^Tv=b^2v'^Tv'=\frac{2}{v'^Tv'}v'^Tv'=2.
+v^\mathrm{T}v=b^2v'^\mathrm{T}v'=\frac{2}{v'^\mathrm{T}v'}v'^\mathrm{T}v'=2.
 $$
 
 从而
 $$
-I-\frac{2}{v'^Tv'}v'v'^T=I-vv^T.
+I-\frac{2}{v'^\mathrm{T}v'}v'v'^\mathrm{T}=I-vv^\mathrm{T}.
 $$
 
-因此最后一步中的缩放因子$b$将向量归一化，使Householder矩阵从标准形式$I-\frac{2}{v'^Tv'}v'v'^T$化为计算上更为简洁的$I-vv^T$。
+因此最后一步中的缩放因子$b$将向量归一化，使Householder矩阵从标准形式$I-\frac{2}{v'^\mathrm{T}v'}v'v'^\mathrm{T}$化为计算上更为简洁的$I-vv^\mathrm{T}$。
 \end{proof}
 
 以上的证明过程中引用了Householder矩阵的性质。但在Lean形式化系统中，这需被拆解为更基本的命题进行逐级证明。完整的形式化证明在代码库的\texttt{Householder.lean}内。
