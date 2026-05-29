@@ -179,16 +179,16 @@ lemma p_pos (n : ℕ) (x : Vec n) (hn : n ≠ 0) (hx : x ≠ 0) :
   rw [← ge_iff_le] at beta_nonneg
   exact lt_of_le_of_ne' beta_nonneg (p_ne_zero n x hn hx)
 
-def e₁ (n : ℕ) (x : Vec n) (hn : n ≠ 0) : Vec n := fun i => if i = ⟨0, Nat.pos_of_ne_zero hn⟩ then - sign x hn * Real.sqrt (x ⬝ᵥ x) else 0
+def sigma_e₁ (n : ℕ) (x : Vec n) (hn : n ≠ 0) : Vec n := fun i => if i = ⟨0, Nat.pos_of_ne_zero hn⟩ then - sign x hn * Real.sqrt (x ⬝ᵥ x) else 0
 
-theorem e₁_of_householder
+theorem sigma_e₁_of_householder
   (n : ℕ)
   (x : Vec n)
   (hn : n ≠ 0)
   (hx : x ≠ 0) :
   let hv := householder n x hn
   let P := 1 - (vecMulVec hv.v hv.v)
-  P • x = e₁ n x hn := by
+  P • x = sigma_e₁ n x hn := by
   intro hv P
   have : P • x = x - (hv.v ⬝ᵥ x) • hv.v := by
     unfold P
@@ -230,7 +230,7 @@ theorem e₁_of_householder
     rw [this]
     simp only [one_smul]
   rw [this]
-  unfold e₁
+  unfold sigma_e₁
   ext i
   by_cases h : i = ⟨0, Nat.pos_of_ne_zero hn⟩
   · rw [if_pos h, h, expand_v', expand_v0, expand_s, expand_l, expand_l']

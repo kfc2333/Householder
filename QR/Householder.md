@@ -133,18 +133,18 @@ lemma p_pos (n : ℕ) (x : Vec n) (hn : n ≠ 0) (hx : x ≠ 0) :
 说明 `p` 实际上是正数，不只是非零。这个结论在后面分析 `β` 的正性时更强，也更方便使用。
 
 ```lean
-def e₁ (n : ℕ) (x : Vec n) (hn : n ≠ 0) : Vec n := fun i => if i = ⟨0, Nat.pos_of_ne_zero hn⟩ then - sign x hn * Real.sqrt (x ⬝ᵥ x) else 0
+def sigma_e₁ (n : ℕ) (x : Vec n) (hn : n ≠ 0) : Vec n := fun i => if i = ⟨0, Nat.pos_of_ne_zero hn⟩ then - sign x hn * Real.sqrt (x ⬝ᵥ x) else 0
 ```
-定义标准基向量方向上的目标结果 `e₁`。它表示 Householder 变换最终要把 `x` 送到的那个只有首项非零的向量。
+定义标准基向量方向上的目标结果 `sigma_e₁`。它表示 Householder 变换最终要把 `x` 送到的那个只有首项非零的向量。
 
 ```lean
-theorem e₁_of_householder
+theorem sigma_e₁_of_householder
   (n : ℕ)
   (x : Vec n)
   (hn : n ≠ 0)
   (hx : x ≠ 0) :
   let hv := householder n x hn
   let P := 1 - (vecMulVec hv.v hv.v)
-  P • x = e₁ n x hn
+  P • x = sigma_e₁ n x hn
 ```
-这是 Householder 构造的核心定理。它说明由 `v` 生成的投影矩阵 `P` 作用在 `x` 上，得到的正是 `e₁`，也就是把向量压到第一个坐标轴方向上。
+这是 Householder 构造的核心定理。它说明由 `v` 生成的投影矩阵 `P` 作用在 `x` 上，得到的正是 `sigma_e₁`，也就是把向量压到第一个坐标轴方向上。

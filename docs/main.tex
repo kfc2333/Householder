@@ -221,7 +221,7 @@ Householder变换是实现QR分解的重要方法。与经典Gram-Schmidt正交�
 
 \chapter{理论基础}
 
-本章与下一章将统一采用参考文献\textit{Accuracy and Stability of Numerical Algorithms}中的记号。
+本章及后文将统一采用\textit{Accuracy and Stability of Numerical Algorithms}~\cite{higham2002}~中的记号。
 
 \section{Householder矩阵}
 
@@ -241,11 +241,11 @@ P^2&=I-\frac{4}{v^Tv}vv^T+\frac{4}{(v^Tv)^2}vv^Tvv^T\\&=I-\frac{4}{v^Tv}vv^T+\fr
 
 \subsection{Householder变换}
 
-考虑方程$Px=y$。其中$x,y$为常数，满足$||x||_2=||y||_2$，我们需要求解满足方程的矩阵$P$。在这里我们令$P$为Householder矩阵，该方程可化为：$$x-2(\frac{v^Tx}{v^Tv})v=y$$
+考虑方程$Px=y$。其中$x,y$为常数，满足$\|x\|_2=\|y\|_2$，我们需要求解满足方程的矩阵$P$。在这里我们令$P$为Householder矩阵，该方程可化为：$$x-2(\frac{v^Tx}{v^Tv})v=y$$
 
 令$v=x-y$，易得$$v^Tv=x^Tx+y^Ty-2x^Ty$$
 
-由$||x||_2=||y||_2$，即$x^Tx=y^Ty$，故$$v^Tx=x^Tx-x^Ty=\frac{1}{2}v^Tv$$
+由$\|x\|_2=\|y\|_2$，即$x^Tx=y^Ty$，故$$v^Tx=x^Tx-x^Ty=\frac{1}{2}v^Tv$$
 
 从而$v=x-y$及其对应的$P=I-\frac{2}{v^Tv}vv^T$构成了方程的一组解。需要注意的是，当$x=y$时，上述公式计算会导致分母为零，此时将$P$退化定义为单位矩阵$I$。
 
@@ -270,14 +270,58 @@ $$A=QR=\left[\begin{matrix}Q_1&Q_2\\\end{matrix}\right]\left[\begin{matrix}R_1\\
 一般地，考虑如下的迭代消元过程：记$A_1=A$，在第$k$次迭代中矩阵具有以下分块形式：
 $$A_k=\left[\begin{matrix}R_{k-1}&z_k&B_k\\0&x_k&C_k\\\end{matrix}\right],\quad R_{k-1}\in\mathbb{R}^{(k-1)\times(k-1)},x_k\in\mathbb{R}^{n-k+1}$$
 
-其中$R_{k-1}$为上三角矩阵。随后构造正交矩阵：
+其中$R_{k-1}$为上三角矩阵。构造正交矩阵：
 $$P_k=\left[\begin{matrix}I_{k-1}&0\\0&\widetilde{P_k}\\\end{matrix}\right]$$
 
-其中$\widetilde{P_k}$为满足$\widetilde{P_k}x_k=\sigma e_1$的Householder矩阵。此处的$\sigma$可以取为适当数值，仅需保证构造分母时不为零。
+其中$\widetilde{P_k}$为使$\widetilde{P_k}x_k$除第一分量外均为$0$的正交矩阵。我们可以构造一个和$x_k$等长的、只有第一分量不为$0$的向量$\sigma_k e_1$，并用Householder法求解方程$\widetilde{P_k}x_k=\sigma_k e_1$来得到满足要求的$\widetilde{P_k}$。这里$e_1$为第一分量上的单位向量$(1, 0, \ldots, 0)$，$\sigma_k=\pm\|x_k\|_2$以保证$\|\sigma_k e_1\|_2=\|x_k\|_2$。我们将在下一小节中讨论$\sigma_k$的符号选择。
 
-结合第2.1.2节的结论，重复该迭代操作即可逐步完成全矩阵的QR分解。
+我们将$P_k$作用于$A_k$，得到下一次迭代的矩阵$A_{k+1}$：
 
-在实际计算中，通常避免显式构建完整的因式矩阵$P_k$，而是利用关系式$\widetilde{P_k}C_k=C_k-\frac{2}{v^Tv}v(v^TC_k)$直接更新后继矩阵。因此，稳定性分析的中心点可以归结为考察向量$v$计算的精度。
+$$A_{k+1}=P_kA_k=
+\left[
+  \begin{matrix}
+    I_{k-1}&0\\
+    0&\widetilde{P_k}\\
+  \end{matrix}
+\right]
+\left[
+  \begin{matrix}
+    R_{k-1}&z_k&B_k\\
+    0&x_k&C_k\\
+  \end{matrix}
+\right]
+=\left[
+  \begin{matrix}
+    R_{k-1}&z_k&B_k\\
+    0&\sigma_k e_1&\widetilde{P_k}C_k\\
+  \end{matrix}
+\right]
+$$
+
+$\sigma_k e_1$的后$n-k$个分量均为$0$，因此$A_{k+1}$满足下一轮的迭代要求。迭代过程全部结束后，我们取$R=R_n$为上三角矩阵，$Q=P_1P_2\cdots P_n$为一系列正交矩阵之积，因此也是正交矩阵。我们就完成了对$A$的QR分解。
+
+\subsection{实际计算中Householder法的细节}
+
+在上一节的迭代过程描述中，$\sigma$的符号选取尚未明确指定。理论上，对于给定的$x$，$\sigma=\pm\|x\|_2$的两种符号均可满足$\|\sigma e_1\|_2=\|x\|_2$的要求，从而都能构造出合法的Householder变换。但若$x$仅第一个分量不为零，即$x=(c,0,\ldots,0)$，且$\sigma$取与$c$同号的符号，则$x_1$与$\sigma$的符号相同，此时由Householder算法构造的向量$v$将退化为零向量，进而导致计算归一化因子$\frac{2}{v^Tv}$时分母为零。为避免这一退化情形，本项目中采用如下约定：
+$$\sigma = -\sign (x_1)\|x\|_2$$
+
+其中$\sign(x_1)$的定义如\ref{def:sign}所示。在这一约定下，只要$x\neq 0$，或者$x_1$与$\sigma$均非零且异号，或者$x_1$为零从而$x\neq(c,0,\ldots,0)$。因此$v$一定非零。
+
+需要指出的是，也存在其他合理的符号选取方式，只是在本项目中我们采用了如上的方式。
+
+另外，在实际计算中，显式构造并存储完整的因式矩阵$P_k$既耗时也无必要。注意到在QR分解的迭代过程中，$P_k$始终以左乘的形式作用于某矩阵子块。由Householder矩阵的定义可知：
+
+$$
+\widetilde{P_k} = I - \frac{2}{v^Tv}vv^T,
+$$
+
+因此对于任意矩阵$X$，
+
+$$
+\widetilde{P_k}X = \left(I - \frac{2}{v^Tv}vv^T\right)X = X - \left(\frac{2}{v^Tv}v\right)(v^TX).
+$$
+
+该表达式仅涉及向量$v$与矩阵$X$之间的数乘和乘法运算，无需显式构建$\widetilde{P_k}$。因此，实际实现中只需存储每次迭代得到的向量$v_k$，即可通过上述公式高效地完成对后继矩阵的更新。因此我们在本项目中不关注$P$的精度，而是直接分析向量$v$的计算误差。
 
 \section{浮点计算}
 
@@ -487,6 +531,17 @@ Lean中每一行代码都具有明确的类型。我们可以将每一个代码�
 \section{记号}
 
 \begin{definition}
+  向量
+\end{definition}
+\begin{leancode}
+  abbrev Vec (n : ℕ) := Fin n → ℝ
+\end{leancode}
+
+本文中将向量定义为从有限类型\lean{Fin n}（包含\lean{n}个元素的枚举类型，即有限集合$\{0, 1, \dots, n-1\}$）到实数\lean{ℝ}的函数，即一个长度为\lean{n}的实数向量。
+
+由于较少用到向量在欧式空间内的性质，我们采用了更简洁的、与Lean中矩阵定义直接相容的函数式向量定义，而不是使用Lean中\lean{Euclidean}类中的向量定义。
+
+\begin{definition}
   浮点计算系统的精度
 \end{definition}
 \begin{leancode}
@@ -534,7 +589,7 @@ $$
 
 \section{基础浮点运算的误差估计}
 
-本节将遵循源文件\textsf{Basic.lean}中的逻辑顺序，给出一系列浮点算术误差估计的基础结论，并证明后续推导所需的相关引理。
+本节将遵循源文件\texttt{Basic.lean}中的逻辑顺序，给出一系列浮点算术误差估计的基础结论，并证明后续推导所需的相关引理。
 
 \begin{lemma}
 \label{lem:gamma-mul-le}
@@ -560,11 +615,9 @@ $$
 \begin{leancode}
   def diff_gamma_bound (n : ℕ) (x x' : ℝ) : Prop :=
     |x - x'| ≤ γ u n * |x|
-  def diff_gamma_bound_theta (n : ℕ) (x x' : ℝ) : Prop :=
-    ∃ θ : ℝ, x' = x * (1 + θ) ∧ |θ| ≤ γ u n
 \end{leancode}
 
-为定量控制运算误差的阶数，此处定义了两个逻辑等价的判别谓词，用于描述计算结果$x'$落在真实值$x$的$\gamma_n$误差界内。第一个定义采用了绝对误差上限的形式。第二个定义是引入了中间变量$\theta$的等价形式，这种存在性论断在处理复杂的复合误差推导时更为简便。
+为定量控制运算误差的阶数，此处定义了两个逻辑等价的判别谓词，用于描述计算结果$x'$落在真实值$x$的$\gamma_n$误差界内。
 
 \begin{lemma}
   误差的保号性
@@ -576,7 +629,7 @@ $$
       x' > 0 
 \end{leancode}
 
-该命题表明，当浮点计算的相对误差界满足$\gamma_n<1$时，舍入累积带来的误差不足以改变真实计算结果的正负号。
+该命题表明，当浮点计算的相对误差界满足$2nu<1$时，舍入累积带来的误差不足以改变真实计算结果的正负号。
 
 \begin{theorem}
 \label{thm:diff-gamma-bound-trans}
@@ -592,7 +645,7 @@ $$
 
 该定理为引理~\ref{lem:gamma-mul-le}~的应用。若真实值$x$经由一次运算得到具有$n_1$阶误差界的近似值$x'$，该近似值再经由一次具有$n_2$阶误差界的运算得到结果$x''$，则$x''$相对于真实值$x$的总误差域在$n_1+n_2$阶内。
 
-这说明误差阶数满足可加性，并保证了在复合运算中误差界的传递性。
+这说明在复合运算中，误差阶数满足可加性，即每一次运算的误差阶数叠加后，最终总误差为不超过各单次运算误差阶数之和阶数的误差。
 
 \begin{lemma}
 \label{lem:add-bound-nonneg}
@@ -608,7 +661,7 @@ $$
       diff_gamma_bound u (nx ⊔ ny) (x + y) (x' + y')
 \end{leancode}
 
-已知参数$x, y\ge 0$，在$x'=(1+\theta_{n_x})x$及$y'=(1+\theta_{n_y})y$成立的前提下，加法运算结果$x'+y'$的总误差上限将由两运算数误差阶数$n_x, n_y$中较高的者所控制。
+已知参数$x, y\ge 0$，在$x'=(1+\theta_{n_x})x$及$y'=(1+\theta_{n_y})y$成立的前提下，加法运算结果$x'+y'$的总误差上限将由两运算数误差阶数$n_x, n_y$中较高者所控制。
 \begin{proof}
   由定义可知
   \begin{align*}
@@ -638,9 +691,9 @@ $$
   由定义可知
   \begin{align*}
     |x'y' - xy| &\le |x'y' - x'y| + |x'y - xy| \\
-    &\le |x'||y' - y| + |y||x' - x| \\
+    &\le |x'| |y' - y| + |y| |x' - x| \\
     &\le (1 + \gamma_{nx})|x|\cdot\gamma_{ny}|y| + |y|\cdot\gamma_{nx}|x| \\
-    &\le (\gamma_{nx} + \gamma_{ny} + \gamma_{nx}\gamma_{ny})|x||y|\\
+    &\le (\gamma_{nx} + \gamma_{ny} + \gamma_{nx}\gamma_{ny})|x| |y|\\
     &\le \gamma_{nx + ny}|xy|
   \end{align*}
 \end{proof}
@@ -723,7 +776,7 @@ $$
       diff_gamma_bound u (n + 1) (x ⬝ x) z 
 \end{leancode}
 
-该定理表明，向量与其自身内积的计算结果满足$n+1$阶误差界。与参考文献第3.1节中关于一般向量内积的普遍结论不同，形式化证明中仅需处理向量与自身的内积。这一条件避免了绝对值不等式的放缩，从而可以直接获得针对计算结果的误差界。
+该定理表明，向量与其自身内积的计算结果满足$n+1$阶误差界。与\textit{Accuracy and Stability of Numerical Algorithms}~\cite{higham2002}~第3.1节中关于一般向量内积的普遍结论不同，形式化证明中仅需处理向量与自身的内积。这一条件避免了绝对值不等式的放缩，从而可以直接获得针对计算结果的误差界。
 \begin{proof}
   记$s_i=\sum_{k=1}^i x_kx_k$，由浮点运算定义得：
   \begin{align*}
@@ -816,9 +869,22 @@ $$
   \end{align*}
 \end{proof}
 
-以上内容涵盖了源文件\textsf{Basic.lean}中关于浮点运算误差的基础定义与核心证明，这些结论将作为工具在后续核心算法误差的推导中被反复应用。
+上述定理对负实数$x$同样成立，但在本项目中仅需处理正实数的取倒数过程，因此未单独证明负数情形。
+
+以上内容涵盖了源文件\texttt{Basic.lean}中关于浮点运算误差的基础定义与核心证明，这些结论将作为工具在后续核心算法误差的推导中被反复应用。
 
 \section{Householder过程}
+
+\begin{definition}
+  Householder变换的目标向量
+\end{definition}
+\begin{leancode}
+  def sigma_e₁ (n : ℕ) (x : Vec n) (hn : n ≠ 0) : Vec n := 
+    fun i => if i = ⟨0, Nat.pos_of_ne_zero hn⟩ 
+                 then - sign x hn * Real.sqrt (x ⬝ x) else 0
+\end{leancode}
+
+如同2.2.3小节中所述，我们选取Householder变换的目标向量为$\sigma e_1=-\sign(x_1)\|x\|_2$。
 
 \begin{definition}
 \label{def:householder}
@@ -830,7 +896,7 @@ $$
 \begin{array}{l}
 l' = x^Tx \\
 l = \sqrt{l'} \\
-s = \operatorname{sign}(x)\cdot l \\
+s = \sign(x)\cdot l \\
 v_1 = x_1 + s \\
 p = s v_1 \\
 \beta = 1/p \\
@@ -875,15 +941,17 @@ $$
   Householder算法的正确性
 \end{theorem}
 \begin{leancode}
-  theorem e₁_of_householder
+  theorem sigma_e₁_of_householder
     (n : ℕ)
     (x : Vec n)
     (hn : n ≠ 0)
     (hx : x ≠ 0) :
       let hv := householder n x hn
       let P := 1 - (vecMulVec hv.v hv.v)
-        P • x = e₁ n x hn
+        P • x = sigma_e₁ n x hn
 \end{leancode}
+
+我们证明如上的Householder算法的正确性，即当$x\neq 0$时，通过上述步骤计算得到的向量$v$可以满足$P=I-vv^T$作用于输入向量$x$后，结果的确为$\sigma e_1=-\sign(x_1)\|x\|_2e_1$。
 
 \begin{proof}
 反复代入可知
@@ -891,7 +959,7 @@ $$
 v'=x-\bigl(-\left(\sign x_1\right)\|x\|_2e_1\bigr).
 $$
 
-由第2.1.2节的结论我们有
+因此由Householder矩阵的性质，我们有
 $$
 (I - \frac{2}{v'^Tv'}v'v'^T)x=-\left(\sign x_1\right)\|x\|_2e_1.
 $$
@@ -919,7 +987,7 @@ $$
 因此最后一步中的缩放因子$b$将向量归一化，使Householder矩阵从标准形式$I-\frac{2}{v'^Tv'}v'v'^T$化为计算上更为简洁的$I-vv^T$。
 \end{proof}
 
-以上的证明过程中引用了前序的结论。但在Lean形式化系统中，部分隐式定理需被拆解为更基本的命题进行逐级证明。完整的形式化实现在代码库的\textsf{Householder.lean}内。
+以上的证明过程中引用了Householder矩阵的性质。但在Lean形式化系统中，这需被拆解为更基本的命题进行逐级证明。完整的形式化证明在代码库的\texttt{Householder.lean}内。
 
 \section{Householder法的误差估计}
 
@@ -952,7 +1020,7 @@ $$
 上述代码以相继传递的中间变量形式，构建了考虑浮点误差扰动的Householder计算序列模型。在此链式结构中，每层衍生变量均须满足基于其直接前驱量的单次运算浮点误差。接下来的证明中，将逐层追踪误差在公式链中的放大特征，最终界定总体输出误差。
 
 \begin{theorem}
-  Householder算法误差的界（对应参考文献中的引理19.1）
+  Householder算法误差的界（\cite{higham2002}~引理19.1）
 \end{theorem}
 \begin{leancode}
   theorem Lemma_19_1 (n : ℕ) (x : Vec n) 
@@ -1022,9 +1090,9 @@ $$
 
 本文基于Lean 4交互式定理证明器，对数值计算中经典的Householder变换的数值稳定性进行了形式化验证。全文的主要工作与贡献可总结为以下三个方面：
 
-首先，梳理了浮点数相对误差的标准模型，并在 Lean 4 中严格定义了一系列基础运算的浮点误差界（即$\gamma_n$误差界）。通过将误差控制过程抽象为形式化的引理和定理，验证了误差的可加性、保号性、传递性以及基本四则运算的误差传递规律，为复杂的数值算法分析奠定了理论基础。
+首先，梳理了浮点数相对误差的标准模型，并在Lean 4中严格定义了一系列基础运算的浮点误差界（即$\gamma_n$误差界）。通过将误差控制过程抽象为形式化的引理和定理，验证了误差的可加性、保号性、传递性以及基本四则运算的误差传递规律，为复杂的数值算法分析奠定了理论基础。
 
-其次，针对Higham在\textit{Accuracy and Stability of Numerical Algorithms}一书中给出的Householder算法误差分析过程（引理19.1），进行了完整的形式化重构。在证明推导中，我们利用机器证明系统的严密性，发现并修补了部分在传统纸笔证明中依赖于“误差近似”或“常规假设”的逻辑间隙。例如，在取倒数运算中，将误差界适当地由$n$阶放宽至$2n$阶，以满足形式化逻辑体系的全域成立条件；在向量自内积中，明确了首项附加加法所带来的阶数放宽。最终，我们严格证明了带误差的Householder过程所输出的向量分量统一受控于$5n+18$阶的综合误差界，确切地用机器形式化证明肯定了该经典算法的数值稳定性。
+其次，针对Higham在\textit{Accuracy and Stability of Numerical Algorithms}~\cite{higham2002}~一书中给出的Householder算法误差分析过程（引理19.1），进行了完整的形式化重构。在证明推导中，我们利用机器证明系统的严密性，发现并修补了部分在传统纸笔证明中依赖于“误差近似”或“常规假设”的逻辑间隙。例如，在取倒数运算中，将误差界适当地由$n$阶放宽至$2n$阶，以满足形式化逻辑体系的全域成立条件；在向量自内积中，明确了首项附加加法所带来的阶数放宽。最终，我们严格证明了带误差的Householder过程所输出的向量分量统一受控于$5n+18$阶的综合误差界，确切地用机器形式化证明肯定了该经典算法的数值稳定性。
 
 最后，本文的实践展示了交互式定理证明器在数值线性代数领域的应用潜力。形式化验证不仅能够发现和规避传统推导中的隐蔽预设，更为开发高可靠性、高精度的数值计算软件库提供了纯粹的理论证明背书。
 
@@ -1038,14 +1106,28 @@ $$
 
 其三，本文所构建的浮点运算模型和各类误差传递引理可进一步通用化与模块化，争取在未来为Mathlib4等主流开源数学库的数值分析分支补充基础定理，为广泛的机器形式化数值计算生态贡献代码与成果。
 
-\chapter*{参考文献}
+\bibliographystyle{plain}
+
+\begin{thebibliography}{9}
 \addcontentsline{toc}{chapter}{参考文献}
 
-[1] Nicholas G. Higham (2002). \textit{Accuracy and Stability of Numerical Algorithms (Second Edition)}, 61-76, 353-362. Society for Industrial and Applied Mathematics.
+\bibitem{higham2002}
+Nicholas G. Higham.
+\textit{Accuracy and Stability of Numerical Algorithms} (2nd ed.).
+Society for Industrial and Applied Mathematics, 2002.
 
-[2] Guoxiong Gao, Haocheng Ju, Jiedong Jiang, Zihan Qin, Bin Dong (2024). A Semantic Search Engine for Mathlib4. \textit{EMNLP 2024 findings}. \url{https://arxiv.org/abs/2403.13310}.
+\bibitem{gao2024mathlib4}
+Guoxiong Gao, Haocheng Ju, Jiedong Jiang, Zihan Qin, and Bin Dong.
+\textit{A Semantic Search Engine for Mathlib4}.
+EMNLP 2024 Findings, 2024.
+\url{https://arxiv.org/abs/2403.13310}
 
-[3] Lean and Mathlib4 Maintainer team. Documentation page for Mathlib4 and Lean, \url{https://leanprover-community.github.io/mathlib4_docs}
+\bibitem{mathlib4docs}
+Lean and Mathlib4 Maintainer team.
+Documentation page for Mathlib4 and Lean.
+\url{https://leanprover-community.github.io/mathlib4_docs}
+
+\end{thebibliography}
 
 \chapter*{附录}
 \addcontentsline{toc}{chapter}{附录}
