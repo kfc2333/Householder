@@ -606,7 +606,7 @@ $$
 
 \section{基础浮点运算的误差估计}
 
-本节将遵循源文件\texttt{Basic.lean}中的逻辑顺序，给出一系列浮点算术误差估计的基础结论，并证明后续推导所需的相关引理。
+本节将遵循源文件\texttt{Basic.lean}中的逻辑顺序，给出一系列关于浮点算术运算误差估计的基础结论，并证明后续推导所需的相关引理。
 
 \begin{lemma}
 \label{lem:gamma-mul-le}
@@ -618,23 +618,35 @@ $$
       (γ u n₁ + 1) * (γ u n₂ + 1) ≤ γ u (n₁ + n₂) + 1
 \end{leancode}
 
-即$n_1$阶和$n_2$阶的误差相叠加后，总误差不超过$n_1+n_2$阶。
+本引理给出了$\gamma$函数的可加性性质：对任意自然数$n_1,n_2$，若$(n_1+n_2)u<1$（即分母为正），则成立
+$$
+(1+\gamma_{n_1})(1+\gamma_{n_2})\le 1+\gamma_{n_1+n_2}.
+$$
+
+换言之，$n_1$阶与$n_2$阶的相对误差相复合后，总误差阶数不超过$n_1+n_2$。这一性质是后续所有复合运算误差分析的基础。它保证了我们可以将误差阶数像普通自然数一样相加，而无需担心复合后误差的非线性放大超出控制。
+
 \begin{proof}
-  展开定义可知，该命题等价于证明
-  $$\frac{1}{1-un_1}\cdot\frac{1}{1-un_2} \le \frac{1}{1-u(n_1+n_2)}$$
-  由前提条件易知各分式分母均为正数，故该不等式成立。
+  将$\gamma_n$的表达式代入，上述不等式等价于
+  $$
+  \frac{1}{1-un_1}\cdot\frac{1}{1-un_2}\le\frac{1}{1-u(n_1+n_2)}.
+  $$
+
+  由前提条件$(n_1+n_2)u<1$可知各分式的分母均为正数，故该不等式可通过简单的代数变形得到验证。
 \end{proof}
 
 \begin{definition}
 \label{def:diff-gamma-bound}
-  误差界
+  误差界谓词
 \end{definition}
 \begin{leancode}
   def diff_gamma_bound (n : ℕ) (x x' : ℝ) : Prop :=
     |x - x'| ≤ γ u n * |x|
 \end{leancode}
 
-为定量控制运算误差的阶数，此处定义了两个逻辑等价的判别谓词，用于描述计算结果$x'$落在真实值$x$的$\gamma_n$误差界内。
+为了在形式化系统中方便地描述“计算结果$x'$落在真实值$x$的$\gamma_n$相对误差界内”这一概念，我们定义了谓词\lean{diff_gamma_bound}。该谓词接受三个参数：误差阶数$n$、精确值$x$和计算值$x'$，其含义为
+$$
+|x'-x|\le \gamma_n|x|.
+$$
 
 \begin{lemma}
   误差的保号性
@@ -646,11 +658,11 @@ $$
       x' > 0 
 \end{leancode}
 
-该命题表明，当浮点计算的相对误差界满足$2nu<1$时，舍入累积带来的误差不足以改变真实计算结果的正负号。
+该引理断言：若精确值$x$为正实数，且其计算值$x'$满足$n$阶$\gamma$误差界，同时误差界参数满足$2nu<1$，则$x'$亦为正数。换言之，当机器精度足够高、运算次数足够少时，累积的舍入误差不足以改变计算结果的正负号。例如，在Householder算法的误差传递过程中，我们需要确保某些中间变量（如$s$与$x_1$）保持同号，从而能够正确应用加法误差引理。
 
 \begin{theorem}
 \label{thm:diff-gamma-bound-trans}
-  误差的传递性
+  误差界的传递性
 \end{theorem}
 \begin{leancode}
   theorem diff_gamma_bound_trans (n₁ n₂ : ℕ) (x x' x'' : ℝ) 
@@ -660,13 +672,16 @@ $$
       diff_gamma_bound u (n₁ + n₂) x x'' 
 \end{leancode}
 
-该定理为引理~\ref{lem:gamma-mul-le}~的应用。若真实值$x$经由一次运算得到具有$n_1$阶误差界的近似值$x'$，该近似值再经由一次具有$n_2$阶误差界的运算得到结果$x''$，则$x''$相对于真实值$x$的总误差域在$n_1+n_2$阶内。
+本定理是引理~\ref{lem:gamma-mul-le}~的直接应用。它描述了误差在复合运算中的传递规律：设真实值$x$经第一步运算得到近似值$x'$，满足$|x'-x|\le\gamma_{n_1}|x|$；该近似值$x'$再经第二步运算得到$x''$，满足$|x''-x'|\le\gamma_{n_2}|x'|$。此外，为保证$\gamma$函数的可组合性，还需假设$\bigl((n_1+n_2)u<1\bigr)$，即分母为正且累加后的误差阶数仍有定义。在此条件下，最终结果$x''$相对于原始真实值$x$的总误差满足
+$$
+|x''-x|\le\gamma_{n_1+n_2}|x|.
+$$
 
-这说明在复合运算中，误差阶数满足可加性，即每一次运算的误差阶数叠加后，最终总误差为不超过各单次运算误差阶数之和阶数的误差。
+在复合运算中，误差阶数满足可加性。即每次运算引入的误差阶数逐次叠加后，最终的总误差阶数不超过各单项运算误差阶数之和。这为我们后续对Householder算法中长达十余步的运算链进行逐层误差累加提供了理论依据。我们只需将每一步的误差阶数相加，即可得到最终结果的总误差阶数。
 
 \begin{lemma}
 \label{lem:add-bound-nonneg}
-  加法运算误差的界
+  加法运算的误差界
 \end{lemma}
 \begin{leancode}
   lemma add_bound_nonneg
@@ -678,21 +693,26 @@ $$
       diff_gamma_bound u (nx ⊔ ny) (x + y) (x' + y')
 \end{leancode}
 
-已知参数$x, y\ge 0$，在$x'=(1+\theta_{n_x})x$及$y'=(1+\theta_{n_y})y$成立的前提下，加法运算结果$x'+y'$的总误差上限将由两运算数误差阶数$n_x, n_y$中较高者所控制。
+现在考虑加法的误差传递。给定两个非负实数$x,y$，其浮点计算值$x',y'$分别满足$n_x$阶和$n_y$阶误差界。此外，还需假设$\bigl(\max\{n_x,n_y\}\cdot u<1\bigr)$，以确保$\gamma_{\max\{n_x,n_y\}}$有定义。我们希望估计$x'+y'$相对于$x+y$的误差。
+
+本引理断言：在此条件下，$x'+y'$的误差阶数由$n_x$与$n_y$中的较大者$\max\{n_x,n_y\}$控制。这是因为加法的误差主要来源于两个加数各自的误差，而两者误差的绝对值之和自然受控于较大误差阶数与两者绝对值之和的乘积。
+
 \begin{proof}
-  由定义可知
+  由三角不等式和误差界定义可得
   \begin{align*}
     |(x' + y') - (x + y)| &\le |x' - x| + |y' - y| \\
-    &\le \gamma_{nx}|x| + \gamma_{ny}|y| \\
-    &\le \gamma_{\max{nx, ny}}(|x| + |y|)\\
-    &= \gamma_{\max{nx, ny}}|x + y|
+    &\le \gamma_{n_x}|x| + \gamma_{n_y}|y| \\
+    &\le \gamma_{\max\{n_x,n_y\}}(|x| + |y|)\\
+    &= \gamma_{\max\{n_x,n_y\}}|x + y|,
   \end{align*}
+  其中最后一个等式用到$x,y\ge 0$的条件，从而$|x|+|y|=x+y=|x+y|$。
 \end{proof}
-需要说明的是，上述推导环节中最后一个等式的成立依赖于变量$x, y$同号。在Lean中，将此结论分为了非负和非正两个版本。
+
+需要说明的是，上述推导中最后一个等式的成立依赖于$x,y$同号（此处均为非负）的条件。在Lean的形式化实现中，为满足该条件，加法误差界被拆分为非负和非正两个版本分别证明。
 
 \begin{lemma}
 \label{lem:mul-bound}
-  乘法运算误差的界
+  乘法运算的误差界
 \end{lemma}
 \begin{leancode}
   lemma mul_bound
@@ -703,16 +723,18 @@ $$
       diff_gamma_bound u (nx + ny) (x * y) (x' * y')
 \end{leancode}
 
-对于乘法运算，若$x'=(1+\theta_{n_x})x$且$y'=(1+\theta_{n_y})y$，则乘积项$x'y'$的复合误差最终受到真实值$xy$的$n_x+n_y$阶误差界约束。
+对于乘法运算，若$x'=(1+\theta_{n_x})x$且$y'=(1+\theta_{n_y})y$，且满足$(n_x+n_y)u<1$（以保证$\gamma_{n_x+n_y}$有定义），则乘积$x'y'$的误差界为$n_x+n_y$阶。与加法不同，乘法的误差阶数是两个因子误差阶数之和而非最大值——这是因为两个因子各自的相对误差在相乘时会相互耦合，产生交叉项，使得总的相对误差阶数上升为两者之和。
+
 \begin{proof}
-  由定义可知
+  通过恒等变形和三角不等式进行估计：
   \begin{align*}
     |x'y' - xy| &\le |x'y' - x'y| + |x'y - xy| \\
-    &\le |x'| |y' - y| + |y| |x' - x| \\
-    &\le (1 + \gamma_{nx})|x|\cdot\gamma_{ny}|y| + |y|\cdot\gamma_{nx}|x| \\
-    &\le (\gamma_{nx} + \gamma_{ny} + \gamma_{nx}\gamma_{ny})|x| |y|\\
-    &\le \gamma_{nx + ny}|xy|
+    &\le |x'||y' - y| + |y||x' - x| \\
+    &\le (1 + \gamma_{n_x})|x|\cdot\gamma_{n_y}|y| + |y|\cdot\gamma_{n_x}|x| \\
+    &\le (\gamma_{n_x} + \gamma_{n_y} + \gamma_{n_x}\gamma_{n_y})|x||y|\\
+    &\le \gamma_{n_x + n_y}|xy|.
   \end{align*}
+  其中最后一步使用了引理~\ref{lem:gamma-mul-le}，即$1+\gamma_{n_x+n_y}=(1+\gamma_{n_x})(1+\gamma_{n_y})$的等价变形。
 \end{proof}
 
 \begin{definition}
