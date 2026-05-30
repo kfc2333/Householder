@@ -181,7 +181,7 @@
 
 \chapter*{摘要}
 
-随着形式化验证技术的发展，利用定理证明系统对数值算法进行严格验证，已成为提高计算结果可信性的重要研究方向。QR分解是数值线性代数中的基础问题，在科学计算与工程应用中具有广泛用途。在求解QR分解问题的多种算法中，Householder方法是能容忍浮点误差的、具有稳定性的重要方法。本文基于Lean定理证明系统，形式化证明了Householder变换在有误差的浮点运算系统中的稳定性。论文首先对浮点误差模型以及Householder变换中的关键计算过程进行了形式化描述，在此基础上完成了稳定性定理的证明，并给出了误差界的具体常数。研究表明，在合理的机器精度条件下，计算误差能够随向量维度保持线性增长，从而保证算法具有良好的数值稳定性。本文工作展示了Lean在数值线性代数算法验证中的应用能力，为后续数值算法的可信形式化研究提供了参考。
+随着形式化验证技术的发展，利用定理证明系统对数值算法进行严格验证，已成为提高计算结果可信性的重要研究方向。QR分解是数值线性代数中的基础问题，在科学计算与工程应用中具有广泛用途。在求解QR分解问题的多种算法中，Householder方法是能容忍浮点误差的、具有稳定性的重要方法。本文基于Lean定理证明系统，形式化证明了Householder变换在有误差的浮点运算系统中的稳定性。论文首先对浮点误差模型以及Householder变换中的关键计算过程进行了形式化描述，在此基础上完成了稳定性定理的证明，并给出了误差界的具体常数。研究表明，在合理的机器精度条件下，计算误差能够随向量维度保持近线性增长，从而保证算法具有良好的数值稳定性。本文工作展示了Lean在线性代数数值算法验证中的应用能力，为后续数值算法的可信形式化研究提供了参考。
 
 \vspace{\baselineskip}
 
@@ -189,7 +189,7 @@
 
 \chapter*{ABSTRACT}
 
-With the development of formal verification, Lean has become an effective tool for rigorously analyzing and certifying numerical algorithms. QR decomposition is a fundamental problem in numerical linear algebra with wide applications in scientific computing and engineering. Among the various algorithms used to solve QR decomposition problems, the Householder method is renowned for its stability and tolerance to floating-point errors. This paper presents the formalization of the stability of Householder transformations using the Lean prover. This project formalized the floatpoint error framework and the essential computational steps involved in Householder transformations, and established a formal proof within Lean. Based on this formalization, explicit error bounds are derived, showing that under reasonable machine precision assumptions, the computational error grows linearly with the vector length. This result confirms the numerical stability of the algorithm and demonstrates the effectiveness of Lean in the formal verification of numerical linear algebra proofs, providing a foundation for further work on trustworthy and machine-checked numerical analysis.
+With the development of formal verification, Lean has become an effective tool for rigorously analyzing and certifying numerical algorithms. QR decomposition is a fundamental problem in numerical linear algebra with wide applications in scientific computing and engineering. Among the various algorithms used to solve QR decomposition problems, the Householder method is renowned for its stability and tolerance to floating-point errors. This paper presents the formalization of the stability of Householder transformations using the Lean prover. This project formalized the float-point error framework and the essential computational steps involved in Householder transformations, and established a formal proof within Lean. Based on this formalization, explicit error bounds are derived, showing that under reasonable machine precision assumptions, the computational error grows nearly linearly with the vector length. This result confirms the numerical stability of the algorithm and demonstrates the effectiveness of Lean in the formal verification of numerical linear algebra proofs, providing a foundation for further work on trustworthy and machine-checked numerical analysis.
 
 \vspace{\baselineskip}
 
@@ -207,7 +207,7 @@ KEYWORDS: Formalization, Lean, Householder transformation, QR decomposition
 
 数值线性代数是科学计算的重要基础，在机器学习、计算机图形学、信号处理、工程仿真以及高性能计算等领域具有广泛应用。其中，QR分解作为数值线性代数中的核心工具，为线性方程组求解、最小二乘问题、特征值计算等任务提供了统一而高效的计算框架。
 
-Householder变换是实现QR分解的重要方法。与经典Gram-Schmidt正交化相比，Householder方法能够有效减小浮点舍入误差带来的影响，因此在实际计算中被广泛采用。其核心思想是通过构造正交反射矩阵，将向量逐步变换为目标方向，从而实现矩阵的正交化过程。由于Householder方法涉及大量浮点运算，其数值稳定性分析一直是数值分析领域的重要研究内容。
+Householder变换是实现QR分解的重要方法。与经典Gram-Schmidt正交化相比，Householder方法能够有效减小浮点舍入误差带来的影响，因此在实际计算中被广泛采用。其核心思想是通过构造正交反射矩阵，逐步变换矩阵的每个列向量，从而实现矩阵的上三角化过程。由于Householder方法涉及大量浮点运算，其数值稳定性分析是数值分析领域的重要研究内容。
 
 算法的数值稳定性证明往往包含复杂的符号推演与多层次误差传播分析。在验证这类包含大量近似和数值计算的证明时，人力验证容易出现疏漏。因此，人们需要使用能更严谨地验证推理过程正确性的形式化工具来完成证明。
 
@@ -215,7 +215,7 @@ Householder变换是实现QR分解的重要方法。与经典Gram-Schmidt正交�
 
 \section{研究内容}
 
-本文围绕Householder变换的数值稳定性问题展开研究，并基于Lean定理证明系统对相关结论进行形式化验证。研究的核心问题是：在浮点误差模型下，Householder变换中关键向量的计算结果是否能够保持足够小的相对误差，以及如何以形式化方式严格证明该性质。
+本文围绕Householder变换的数值稳定性问题展开研究，并基于Lean定理证明系统对相关结论进行形式化验证。研究的核心问题是：在浮点误差模型下，Householder变换得到的结果向量的计算结果是否能够保持足够小的相对误差，以及如何以形式化方式严格证明该性质。
 
 为此，本文首先对Householder变换的数学定义及其稳定性理论进行了分析，并建立相应的浮点误差模型。在此基础上，使用Lean对相关数学对象、误差界以及稳定性定理进行形式化表示与证明。本文进一步给出了误差界中的具体常数，从而使稳定性结论具有更明确的量化形式。这表明形式化方法不仅能够验证已有理论结果，还能够补全传统分析中省略的隐式前提与证明步骤。
 
@@ -237,17 +237,19 @@ $$P=I-\frac{2}{v^\mathrm{T}v}vv^\mathrm{T},\quad 0\neq v \in \mathbb{R}^n$$
 P^2&=I-\frac{4}{v^\mathrm{T}v}vv^\mathrm{T}+\frac{4}{(v^\mathrm{T}v)^2}vv^\mathrm{T}vv^\mathrm{T}\\&=I-\frac{4}{v^\mathrm{T}v}vv^\mathrm{T}+\frac{4}{(v^\mathrm{T}v)^2}v(v^\mathrm{T}v)v^\mathrm{T}=I
 \end{align*}
 
-结合其对称性易知$P$为正交矩阵。
+结合其对称性知$P$为正交矩阵。
 
 \subsection{Householder变换}
 
-考虑方程$Px=y$。其中$x,y$为常数，满足$\|x\|_2=\|y\|_2$，我们需要求解满足方程的矩阵$P$。在这里我们令$P$为Householder矩阵，该方程可化为：$$x-2(\frac{v^\mathrm{T}x}{v^\mathrm{T}v})v=y$$
+考虑方程$Px=y$。其中$x,y$为常向量，满足$\|x\|_2=\|y\|_2$，我们需要求解满足方程的矩阵$P$。在这里我们令$P$为Householder矩阵，该方程可化为：$$x-2(\frac{v^\mathrm{T}x}{v^\mathrm{T}v})v=y$$
 
 令$v=x-y$，易得$$v^\mathrm{T}v=x^\mathrm{T}x+y^\mathrm{T}y-2x^\mathrm{T}y$$
 
 由$\|x\|_2=\|y\|_2$，即$x^\mathrm{T}x=y^\mathrm{T}y$，故$$v^\mathrm{T}x=x^\mathrm{T}x-x^\mathrm{T}y=\frac{1}{2}v^\mathrm{T}v$$
 
-从而$v=x-y$及其对应的$P=I-\frac{2}{v^\mathrm{T}v}vv^\mathrm{T}$构成了方程的一组解。需要注意的是，当$x=y$时，上述公式计算会导致分母为零，此时将$P$退化定义为单位矩阵$I$。
+因此$$x-2(\frac{v^\mathrm{T}x}{v^\mathrm{T}v})v=x-v=y$$
+
+从而$v=x-y$及其对应的$P=I-\frac{2}{v^\mathrm{T}v}vv^\mathrm{T}$构成了方程的一组解。需要注意的是，当$x=y$时，上述公式计算会导致分母为零，此时将$P$退化定义为单位矩阵$I$。在实际计算中，我们通常会选择$x$与$y$的符号相反以避免退化情况的发生。后文中有对此更详细的讨论。
 
 \section{QR分解}
 
@@ -270,7 +272,7 @@ $$A=QR=\left[\begin{matrix}Q_1&Q_2\\\end{matrix}\right]\left[\begin{matrix}R_1\\
 一般地，考虑如下的迭代消元过程：记$A_1=A$，在第$k$次迭代中矩阵具有以下分块形式：
 $$A_k=\left[\begin{matrix}R_{k-1}&z_k&B_k\\0&x_k&C_k\\\end{matrix}\right],\quad R_{k-1}\in\mathbb{R}^{(k-1)\times(k-1)},x_k\in\mathbb{R}^{n-k+1}$$
 
-其中$R_{k-1}$为上三角矩阵。构造正交矩阵：
+其中$R_{k-1}$为上三角矩阵。对于下一次迭代，我们先构造正交矩阵：
 $$P_k=\left[\begin{matrix}I_{k-1}&0\\0&\widetilde{P_k}\\\end{matrix}\right]$$
 
 其中$\widetilde{P_k}$为使$\widetilde{P_k}x_k$除第一分量外均为$0$的正交矩阵。我们可以构造一个和$x_k$等长的、只有第一分量不为$0$的向量$\sigma_k e_1$，并用Householder法求解方程$\widetilde{P_k}x_k=\sigma_k e_1$来得到满足要求的$\widetilde{P_k}$。这里$e_1$为第一分量上的单位向量$(1, 0, \ldots, 0)$，$\sigma_k=\pm\|x_k\|_2$以保证$\|\sigma_k e_1\|_2=\|x_k\|_2$。我们将在下一小节中讨论$\sigma_k$的符号选择。
@@ -298,7 +300,7 @@ $$A_{k+1}=P_kA_k=
 \right]
 $$
 
-$\sigma_k e_1$的后$n-k$个分量均为$0$，因此$A_{k+1}$满足下一轮的迭代要求。迭代过程全部结束后，我们取$R=R_n$为上三角矩阵，$Q=P_1P_2\cdots P_n$为一系列正交矩阵之积，因此也是正交矩阵。我们就完成了对$A$的QR分解。
+$\sigma_k e_1$的后$n-k$个分量均为$0$，因此$A_{k+1}$满足下一轮的迭代要求。迭代过程全部结束后，我们取$R=R_n$为上三角矩阵，$Q=P_nP_{n-1}\cdots P_1$为一系列正交矩阵之积，因此也是正交矩阵。我们就完成了对$A$的QR分解。
 
 \subsection{实际计算中Householder法的细节}
 
@@ -307,7 +309,7 @@ $$\sigma = -\sign (x)\|x\|_2$$
 
 其中$\sign(x)$的定义如\ref{def:sign}所示。当$x_1<0$时取$-1$，$x_1\ge 0$时取$1$。在这一约定下，只要$x\neq 0$，或者$x_1$与$\sigma$均非零且异号，或者$x_1$为零从而$x\neq(c,0,\ldots,0)$。因此$v$一定非零。
 
-需要指出的是，也存在其他合理的符号选取方式，只是在本项目中我们采用了如上的方式。
+需要指出，也存在其他合理的符号选取方式，只是在本项目中我们采用了如上的方式。
 
 另外，在实际计算中，显式构造并存储完整的因式矩阵$P_k$既耗时也无必要。注意到在QR分解的迭代过程中，$P_k$始终以左乘的形式作用于某矩阵子块。由Householder矩阵的定义可知：
 
@@ -321,20 +323,22 @@ $$
 \widetilde{P_k}X = \left(I - \frac{2}{v^\mathrm{T}v}vv^\mathrm{T}\right)X = X - \left(\frac{2}{v^\mathrm{T}v}v\right)(v^\mathrm{T}X).
 $$
 
-该表达式仅涉及向量$v$与矩阵$X$之间的数乘和乘法运算，无需显式构建$\widetilde{P_k}$。因此，实际实现中只需存储每次迭代得到的向量$v_k$，即可通过上述公式高效地完成对后继矩阵的更新。因此我们在本项目中不关注$P$的精度，而是直接分析向量$v$的计算误差。
+该表达式仅涉及向量$v$与矩阵$X$之间的数乘和乘法运算，无需显式构建$\widetilde{P_k}$。因此，实际实现中只需存储每次迭代得到的向量$v_k$，即可通过上述公式高效地完成对后继矩阵的更新，以及所有潜在的后续应用。因此我们在本项目中不关注$P$的精度，而是直接分析向量$v$的计算误差。
 
 \section{浮点计算}
 
 实数的基本运算在各类科学计算中无疑扮演着至关重要的角色。然而，受限于物理硬件的有限容量，实数在机器内的表示不可避免地引入了截断与近似。工程实践通常采用浮点格式表示实数，该表示方法采用科学计数法的思想，利用尾数与指数的组合实现了对跨度宽阔数量级数值的统一表达，奠定了当代大规模数值计算的工程基础。
 
-尽管此种方案极大提升了计算机处理实数的计算能效，针对浮点误差的研究长期以来仍是数值分析领域的前沿和重难点内容。一方面，计算机由于仅能承载有限精度的数据，故无论处于数据存取、制式转换抑或实数运算的何一环节都会有引入微小偏差的潜在可能。再者，伴随大量循环与迭代结构，上述误差不仅累加而且容易急剧传播放缩，最终从根本上限制作答的可靠度乃至稳定性。高精度科研仿真抑或智能模型优化中更容不得轻视：不经意引入的截尾畸变很容易酿成算法失败或是模型崩溃等恶劣后果。有鉴于此，探明浮点误差其形成缘由和蔓延特点对于全维度保障演算的信度以及算法系统的鲁棒性无疑具有巨大的研究价值。
+尽管浮点数方案极大地提升了计算机处理实数的效率，但浮点误差一直是数值分析中的重要研究课题。一方面，计算机只能存储有限精度的数据，因此在数据存取、格式转换或实数运算的每个环节都可能引入微小偏差。另一方面，在大量循环与迭代计算中，这些误差不仅会累积，还可能急剧放大，最终影响计算结果的可靠性与稳定性。不经意间引入的截断误差可能导致算法失败甚至模型崩溃，高精度科学仿真和智能模型优化尤其不能忽视这一问题。因此，理解浮点误差产生的原因和传播规律，对于保证计算的可信度和算法的健壮性具有重要的研究意义。
 
 \subsection{浮点数存储}
 
 计算机中的浮点数遵循 IEEE 754 标准，其存储结构主要由符号位、指数位和尾数位三部分构成。其中，符号位用于表示数值正负；指数位用于表示数值的数量级；尾数位用于存储有效数字。以单精度浮点数为例，其使用32个比特位存储一个实数。大部分规格化浮点数被表示为：
-$(-1)^s\times(1.m)\times2^{e-127}$
+$$(-1)^s\times(1.m)\times2^{e-127}$$
 
 其中$s, e, m$均为相应的二进制分段。它们合计占据32位以构成完整的单精度浮点格式：段$s$专门承载符号信息，占1个比特位；段$e$作为阶码存放，占8个比特位；段$m$用作底数小数储存，占剩余的23个比特位。
+
+例如，十进制小数$0.375$的二进制表示为$0.011$，规格化后为$1.1\times2^{-2}$。按照单精度浮点格式存储时，符号位$s=0$（正数），指数位$e=-2+127=125$（即二进制$01111101$），尾数位$m$存储小数点后的部分$1000\ldots$（隐含前导的$1.$）。
 
 \subsection{舍入误差}
 
@@ -346,22 +350,25 @@ $$2^4\times1.1110+2^3\times1.0011=30+9.5=39.5=2^5\times1.001111$$
 上述理论结果的尾数需要6位，超出了模型中4位尾数的存储限制，故必须对其进行舍入截断：
 $$2^5\times1.001111\approx2^5\times1.0100=40$$
 
-受限于计算机的有限字长，产生舍入误差不可避免，但该误差通常有界且满足特定的数学规律。这为建立严谨的代数边界模型、定量分析算法的数值稳定性提供了理论依据。
+受限于计算机的有限字长，产生舍入误差不可避免，但该误差通常有界且满足特定的数学规律。这为建立严谨的误差代数模型、定量分析算法的数值稳定性提供了理论基础。
 
 \subsection{浮点计算误差模型}
 
-舍入误差的边界受限于浮点格式的尾数长度。假设浮点系统提供$m$位尾数，则单次舍入操作产生的相对误差不超过$1/2^{m+1}$。在此基础上，数值分析中常引入如下标准浮点误差模型以量化计算偏差：
+舍入误差的大小受限于浮点格式的尾数长度。若假设浮点系统提供$m$位尾数，则单次舍入操作产生的相对误差不超过$1/2^{m+1}$。在此基础上，数值分析中常引入如下标准浮点误差模型，量化计算偏差：
 
 设$x,\ y\in\mathbb{R}$，记$op\in\{+,-,\times,/\}$为基本浮点运算符号。一次标准浮点运算的计算结果可表示为：
 $$\mathrm{fl}(x\ op\ y)=(x\ op\ y)(1+\delta),\quad |\delta|\le u$$
 
-% TODO: add sqrt
-
 其中$\mathrm{fl}(\cdot)$表示机器系统内的浮点算术实现，$\delta$为该次运算产生的相对舍入误差，$u$称为机器精度，是一个完全由硬件存储精度决定的正常数。
+
+此外，对于开方运算$\sqrt{x}$，我们也假设其浮点实现满足类似的条件：
+$$\mathrm{fl}(\sqrt{x})=\sqrt{x}\,(1+\delta),\quad |\delta|\le u$$
+
+这是因为开方的浮点实现（如牛顿迭代法等）通常也可以计算到任意精度，因此其最终结果的有效精度仅受浮点存储格式本身的有效位数限制，与单次算术运算的舍入行为一致。
 
 需要注意的是，某些特定的基础操作（如取相反数、与零相加）不涉及尾数的舍入截断，从而不会引入舍入误差。
 
-该模型的优势在于，它能够将一次浮点运算产生的误差统一表示为一个有界的相对扰动，从而使复杂算法中的误差传播分析可以转化为对多个扰动项的组合估计。相比直接分析底层二进制表示，该模型在保留主要误差特征的同时，大幅降低了理论分析的复杂度。此外，该模型中的误差界仅依赖于机器精度，而与具体运算数值无关，因此分析得到的结果对输入是鲁棒的。在后续证明中，本文将反复利用该模型对连续浮点运算中的误差进行估计，并给出误差的上界。
+该模型的优势在于，它能够将一次浮点运算产生的误差统一表示为一个有界的相对扰动，从而使复杂算法中的误差传播分析可以转化为对多个扰动项的组合估计。相比直接分析底层二进制表示，该模型在保留主要误差特征的同时，大幅降低了理论分析的复杂度。此外，该模型中的误差界仅依赖于机器精度，而与具体运算数值无关，因此分析得到的结果不会受到具体输入数据影响。在后续证明中，本文将反复利用该模型对Householder方法中连续浮点运算的误差进行估计，并给出误差的上界。
 
 \chapter{Lean基础}
 
@@ -371,7 +378,7 @@ $$\mathrm{fl}(x\ op\ y)=(x\ op\ y)(1+\delta),\quad |\delta|\le u$$
 
 Lean中每一行代码都具有明确的类型。我们可以将每一个代码片段视作一个“声明”，它要么定义一个值或函数，要么声明一个待证明的性质。
 
-考虑如下最常见的模式——引理（lemma）或定理（theorem）的声明：
+考虑如下最常见的模式：引理（lemma）或定理（theorem）的声明：
 
 \begin{leancode}
   lemma add_zero (a : ℕ) : a + 0 = a
@@ -414,7 +421,7 @@ Lean中每一行代码都具有明确的类型。我们可以将每一个代码�
 
 \subsection{定义函数}
 
-以下是定义~\ref{def:gamma}~的代码，定义了一个函数\lean{γ}：
+以下是定义~\ref{def:gamma}~的代码，这段代码定义了一个函数\lean{γ}：
 
 \begin{leancode}
   def γ (n : ℕ) : ℝ := (n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ))
@@ -427,7 +434,7 @@ Lean中每一行代码都具有明确的类型。我们可以将每一个代码�
   \item \lean{(n : ℕ)}：参数，\lean{n}的类型是自然数\lean{ℕ}。
   \item \lean{: ℝ}：冒号后的\lean{ℝ}表示函数返回值类型是实数。
   \item \lean{:=}：赋值符号，表示“定义为”。
-  \item 右侧为具体的表达式：\lean{(n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ))}。注意这里用\lean{(n : ℝ)}将自然数\lean{n}转换为实数，这是必要的，因为乘法和除法运算要求操作数类型一致。
+  \item 右侧为具体的表达式：\lean{(n : ℝ) * (u : ℝ) / (1 - (n : ℝ) * (u : ℝ))}。注意这里用\lean{(n : ℝ)}将自然数\lean{n}转换为实数，这是必要的，因为在Lean中，乘法和除法运算要求操作数类型一致。
 \end{itemize}
 
 这个定义直接对应本文中的记号$\gamma_n=\frac{nu}{1-nu}$，用于量化浮点运算的累积相对误差上界。
@@ -462,7 +469,7 @@ Lean中每一行代码都具有明确的类型。我们可以将每一个代码�
 
 \section{结构体（structure）}
 
-\lean{structure}关键字用于将多个相关的数据打包成一个复合类型，类似于其他语言中的类的概念。本项目中使用了一个结构体来封装Householder计算过程中的所有中间变量：
+\lean{structure}关键字用于将多个相关的数据打包成一个复合类型，类似于其他语言中类的概念。本项目中使用了一个结构体来封装Householder计算过程中的所有中间变量：
 
 \begin{leancode}
   structure Householder (n : ℕ) (hn : n ≠ 0) where
@@ -604,6 +611,9 @@ $$
 
 需要特别说明的是，此处的$\sign$函数在$x_1=0$处的取值为$1$，这与最标准的符号函数（通常在零点处取$0$）不同。我们的符号函数选取源于Householder算法本身的计算需求，在构造Householder变换时，我们选取$\sigma=-\sign(x)\|x\|_2$作为目标值（详见第2.2.3小节）。
 
+\begin{definition}
+  中间变量
+\end{definition}
 对于本研究中涉及的任意中间变量，本文采用如下约定加以区分：记$a$为精确计算所得的真值（即数学意义上的理论结果），而相应的$\hat{a}$为在浮点环境中经过有限精度运算得到的近似计算值。在下文的误差分析中，我们始终以这一对记号展开讨论，并致力于刻画Householder法得到的向量$\hat{v}$相对于真实向量$v$的误差之范围。
 
 \section{基础浮点运算的误差估计}
@@ -620,7 +630,7 @@ $$
       (γ u n₁ + 1) * (γ u n₂ + 1) ≤ γ u (n₁ + n₂) + 1
 \end{leancode}
 
-本引理给出了$\gamma$函数的可加性性质：对任意自然数$n_1,n_2$，若$(n_1+n_2)u<1$（即分母为正），则成立
+本引理给出了$\gamma$函数的可加性性质：对任意自然数$n_1,n_2$，若$(n_1+n_2)u<1$（即保证所有$\gamma$函数分母为正），则成立
 $$
 (1+\gamma_{n_1})(1+\gamma_{n_2})\le 1+\gamma_{n_1+n_2}.
 $$
@@ -630,7 +640,7 @@ $$
 \begin{proof}
   将$\gamma_n$的表达式代入，上述不等式等价于
   $$
-  \frac{1}{1-un_1}\cdot\frac{1}{1-un_2}\le\frac{1}{1-u(n_1+n_2)}.
+  \frac{1}{1-n_1u}\cdot\frac{1}{1-n_2u}\le\frac{1}{1-(n_1+n_2)u}.
   $$
 
   由前提条件$(n_1+n_2)u<1$可知各分式的分母均为正数，故该不等式可通过简单的代数变形得到验证。
@@ -679,7 +689,7 @@ $$
 |x''-x|\le\gamma_{n_1+n_2}|x|.
 $$
 
-在复合运算中，误差阶数满足可加性。即每次运算引入的误差阶数逐次叠加后，最终的总误差阶数不超过各单项运算误差阶数之和。这为我们后续对Householder算法中长达十余步的运算链进行逐层误差累加提供了理论依据。我们只需将每一步的误差阶数相加，即可得到最终结果的总误差阶数。
+在复合运算中，误差阶数满足可加性。即每次运算引入的误差阶数逐次叠加后，最终的总误差阶数不超过各单项运算误差阶数之和。这为我们后续对Householder算法中的运算链进行逐层误差累加提供了理论依据。我们只需将每一步的误差阶数相加，即可得到最终结果的总误差阶数。
 
 \begin{lemma}
 \label{lem:add-bound-nonneg}
@@ -707,7 +717,7 @@ $$
     &\le \gamma_{\max\{n_x,n_y\}}(|x| + |y|)\\
     &= \gamma_{\max\{n_x,n_y\}}|x + y|,
   \end{align*}
-  其中最后一个等式用到$x,y\ge 0$的条件，从而$|x|+|y|=x+y=|x+y|$。
+  其中最后一个等式用到$x,y$同号的条件，从而$|x|+|y|=|x+y|$。
 \end{proof}
 
 需要说明的是，上述推导中最后一个等式的成立依赖于$x,y$同号（此处均为非负）的条件。在Lean的形式化实现中，为满足该条件，加法误差界被拆分为非负和非正两个版本分别证明。
@@ -725,7 +735,7 @@ $$
       diff_gamma_bound u (nx + ny) (x * y) (x' * y')
 \end{leancode}
 
-对于乘法运算，若$x'=(1+\theta_{n_x})x$且$y'=(1+\theta_{n_y})y$，且满足$(n_x+n_y)u<1$（以保证$\gamma_{n_x+n_y}$有定义），则乘积$x'y'$的误差界为$n_x+n_y$阶。与加法不同，乘法的误差阶数是两个因子误差阶数之和而非最大值——这是因为两个因子各自的相对误差在相乘时会相互耦合，产生交叉项，使得总的相对误差阶数上升为两者之和。
+对于乘法运算，若$x'=(1+\theta_{n_x})x$且$y'=(1+\theta_{n_y})y$，且满足$(n_x+n_y)u<1$（以保证$\gamma_{n_x+n_y}$有定义），则乘积$x'y'$的误差界为$n_x+n_y$阶。与加法不同，乘法的误差阶数是两个因子误差阶数之和而非最大值。
 
 \begin{proof}
   通过恒等变形和三角不等式进行估计：
@@ -736,7 +746,7 @@ $$
     &\le (\gamma_{n_x} + \gamma_{n_y} + \gamma_{n_x}\gamma_{n_y})|x||y|\\
     &\le \gamma_{n_x + n_y}|xy|.
   \end{align*}
-  其中最后一步使用了引理~\ref{lem:gamma-mul-le}，即$1+\gamma_{n_x+n_y}=(1+\gamma_{n_x})(1+\gamma_{n_y})$的等价变形。
+  其中最后一步使用了引理~\ref{lem:gamma-mul-le}，即$1+\gamma_{n_x+n_y}\ge(1+\gamma_{n_x})(1+\gamma_{n_y})$的等价变形。
 \end{proof}
 
 \begin{definition}
@@ -877,7 +887,7 @@ $$
       diff_gamma_bound u n (Real.sqrt x) (Real.sqrt x') 
 \end{leancode}
 
-本引理考察开方运算对误差的影响。前提条件：$x$为非负实数（保证开方有意义），其计算值$x'$满足$n$阶误差界（即$x'=x(1+\theta_n)$，$|\theta_n|\le\gamma_n$），且$2nu<1$（以保证$\gamma_n$有定义且误差足够小）。在此条件下，开方结果$\sqrt{x'}$相对于精确值$\sqrt{x}$仍满足$n$阶误差界，即
+本引理考察开方运算对误差的影响。前提条件：$x$为非负实数（保证开方有意义），其计算值$x'$满足$n$阶误差界（即$x'=x(1+\theta_n)$，$|\theta_n|\le\gamma_n$），且$2nu<1$（以保证$\gamma_n$有定义且$x'$也仍为正数）。在此条件下，开方结果$\sqrt{x'}$相对于精确值$\sqrt{x}$仍满足$n$阶误差界，即
 $$
 |\sqrt{x'} - \sqrt{x}| \le \gamma_n \sqrt{x}.
 $$
@@ -900,7 +910,7 @@ $$
 \left|\frac{1}{x'} - \frac{1}{x}\right| \le \gamma_{2n}\,\frac{1}{|x|}.
 $$
 
-在经典的数值分析中，通常利用近似等式$1/(1+\theta_n)\approx 1-\theta_n$（在$u\ll 1$时成立），认为取倒数不会放大误差阶数。然而，在严格的形式化证明中，不等式$1/(1-\gamma_n)\le 1+\gamma_n$并非恒成立——它仅在$\gamma_n$足够小时近似成立。为了保证结论在形式化系统中的绝对严谨性，我们不得不将倒数运算的误差界放宽至$2n$阶，使下面的不等式组成立。
+在经典的数值分析中，通常利用近似等式$1/(1+\theta_n)\approx 1-\theta_n$（在$u\ll 1$时成立），认为取倒数不会放大误差阶数。然而，在严格的形式化证明中，不等式$1/(1-\gamma_n)\le 1+\gamma_n$仅在$\gamma_n$足够小时近似成立。为了保证结论在形式化系统中的绝对严谨性，我们不得不将倒数运算的误差界放宽至$2n$阶，使下面的不等式组成立。
 
 \begin{proof}
   只需证明
@@ -955,7 +965,7 @@ $$
 
 上述结论对负实数$x$同样成立（只需取相反数后处理），但在本项目中，Householder算法中涉及的取倒数操作仅作用于正实数$p$（$p=s\cdot v_0$，由引理可证其为正），因此我们未单独证明负数情形。
 
-以上内容完整涵盖了源文件\texttt{Basic.lean}中关于浮点运算误差的基础定义与核心引理，包括$\gamma$函数的可加性、标量和向量的误差界谓词、基本运算的浮点误差封装、向量点乘的误差估计，以及开方和倒数运算的误差传递规律等结论。这些结论构成了整个Householder算法误差分析的理论工具箱。在下一节中，我们将借助这些工具，对Householder过程的每一步中间变量逐层进行误差追踪，最终给出输出向量的总体误差界。
+以上内容完整涵盖了源文件\texttt{Basic.lean}中关于浮点运算误差的基础定义与核心引理，包括$\gamma$函数的可加性、标量和向量的误差界谓词、基本运算的浮点误差封装、向量点乘的误差估计，以及开方和倒数运算的误差传递规律等结论。
 
 \section{Householder过程}
 
@@ -980,13 +990,13 @@ $$
   Householder算法
 \end{definition}
 
-对于任意非零向量$x\in\mathbb{R}^n$，Householder算法通过以下七步计算构造反射矩阵所需的向量$v$，使得$P=I-vv^\mathrm{T}$满足$Px=-\sign(x_1)\|x\|_2e_1$：
+对于任意非零向量$x\in\mathbb{R}^n$，Householder算法通过以下几步计算构造反射矩阵所需的向量$v$，使得$P=I-vv^\mathrm{T}$满足$Px=-\sign(x_1)\|x\|_2e_1$：
 
 \begin{enumerate}
   \item 计算向量模长的平方：$l' = x^\mathrm{T}x$。
   \item 计算模长：$l = \sqrt{l'}$。
   \item 引入符号：$s = \sign(x)\cdot l$，即$s = -\sigma$。
-  \item 构造$v$的首分量：$v_1 = x_1 + s$。注意由$\sign$的定义，$s$与$x_1$符号相反，因此$v_1\neq0$。
+  \item 构造$v$的首分量：$v_1 = x_1 + s$。注意由$\sign$的定义，$s$与$x_1$同号且$s\neq 0$，因此$v_1\neq0$。
   \item 计算辅助标量：$p = s\cdot v_1$。
   \item 计算$\beta = 1/p$，再计算$b = \sqrt{\beta}$。
   \item 定义向量$v'$：$v'_1=v_1$，$v'_i=x_i\;(i>1)$，再令$v = b\,v'$。
@@ -1071,7 +1081,7 @@ $$
 \Bigl(I - \frac{2}{{v'}^\mathrm{T}v'}v'{v'}^\mathrm{T}\Bigr)x = \sigma e_1 = -\sign(x_1)\|x\|_2\,e_1.
 $$
 
-接下来证明经过缩放后的$v = bv'$构造的矩阵$I-vv^\mathrm{T}$与上述标准形式相同。由定义$p = s\cdot v_1$以及$s$和$v_1$的表达式，计算可得
+接下来证明经过缩放后的$v = bv'$构造的矩阵$I-vv^\mathrm{T}$与上述标准形式中的矩阵相同。由定义$p = s\cdot v_1$以及$s$和$v_1$的表达式，计算可得
 $$
 {v'}^\mathrm{T}v' = x^\mathrm{T}x + 2sx_1 + s^2 = 2sx_1 + 2s^2 = 2p.
 $$
