@@ -9,6 +9,8 @@ docs/main.toc
 docs/main.out
 docs/_minted-main
 docs/_minted
+docs/acknowledgements_private.tex
+docs/main.pdf
 main.aux
 main.fdb_latexmk
 xelatex*.fls
